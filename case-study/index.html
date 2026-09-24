@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hearts for Low Vision</title>
+<meta name="description" content="Case study: an ad-free, low-vision Hearts game for an iPhone, designed and built with Claude Code, with every visual decision made by the product owner.">
+<link rel="icon" href="../hearts/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Roboto:wght@900&family=Roboto+Mono:wght@500&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #F4F6F3;
+    --ink: #151D18;
+    --muted: #57635B;
+    --rule: #D4DBD5;
+    --felt: #1E4D2E;
+    --felt-ink: #1E4D2E;
+    --red: #A81F1A;
+    --panel: #FFFFFF;
+    --todo-bg: #FFF6DA;
+    --todo-ink: #6B4A00;
+    --todo-rule: #D9A21B;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper: #0F1512;
+      --ink: #E6ECE7;
+      --muted: #9CA9A0;
+      --rule: #27312B;
+      --felt-ink: #6CC08A;
+      --red: #F0655E;
+      --panel: #161E19;
+      --todo-bg: #2A2311;
+      --todo-ink: #F2D38A;
+      --todo-rule: #8C6A1C;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #0F1512;
+    --ink: #E6ECE7;
+    --muted: #9CA9A0;
+    --rule: #27312B;
+    --felt-ink: #6CC08A;
+    --red: #F0655E;
+    --panel: #161E19;
+    --todo-bg: #2A2311;
+    --todo-ink: #F2D38A;
+    --todo-rule: #8C6A1C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 18px/1.6 "Atkinson Hyperlegible", -apple-system, system-ui, sans-serif;
+  }
+  .page { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: max(40px, env(safe-area-inset-top)) 72px; display: grid; gap: 72px; }
+  .prose { max-width: 66ch; }
+  .prose > * + * { margin-top: 0.9em; }
+  p { margin: 0; }
+  h1, h2, h3 { font-family: "Roboto", -apple-system, sans-serif; font-weight: 900; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(40px, 7vw, 68px); line-height: 1.02; }
+  h2 { font-size: clamp(28px, 4vw, 36px); line-height: 1.1; }
+  h3 { font-size: 22px; line-height: 1.2; }
+  .label { font: 500 13px/1.3 "Roboto Mono", ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  a { color: var(--felt-ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+  a:focus-visible { outline: 3px solid var(--felt-ink); outline-offset: 2px; }
+  figure { margin: 0; display: grid; gap: 10px; }
+  figure img { display: block; width: 100%; max-width: 100%; height: auto; border-radius: 12px; }
+  figcaption { font-size: 15px; color: var(--muted); line-height: 1.45; }
+
+  .hero { display: grid; gap: 40px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: center; }
+  .hero .intro { display: grid; gap: 22px; }
+  .lede { font-size: 21px; line-height: 1.55; max-width: 38ch; }
+  .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; border-top: 1px solid var(--rule); padding-top: 18px; }
+  .facts div { display: grid; gap: 2px; }
+  .facts b { font-weight: 700; font-size: 16px; }
+  .links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 16px; }
+  .hero-preview { display: grid; justify-items: center; gap: 12px; }
+  .phone-frame { width: 100%; max-width: 320px; border-radius: 26px; overflow: hidden; border: 2px solid var(--rule); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3); }
+  .phone-frame img { display: block; width: 100%; height: auto; border-radius: 0; }
+  @media (max-width: 760px) { .hero { grid-template-columns: 1fr; } }
+
+  section { display: grid; gap: 28px; }
+  .constraints { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 16px; }
+  .constraint { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 18px; display: grid; gap: 6px; align-content: start; }
+  .constraint .big { font: 900 32px/1 "Roboto", sans-serif; color: var(--felt-ink); font-variant-numeric: tabular-nums; }
+  .constraint p { font-size: 16px; color: var(--muted); }
+
+  .rules { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; max-width: 70ch; }
+  .rules li { padding-left: 22px; position: relative; }
+  .rules li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 10px; height: 10px; background: var(--red); transform: rotate(45deg); }
+
+  .calls { display: grid; gap: 18px; }
+  .call { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; background: var(--panel); }
+  .call > div { padding: 18px 20px; display: grid; gap: 6px; align-content: start; }
+  .call > div + div { border-left: 1px solid var(--rule); }
+  .call .mine { font-weight: 700; color: var(--felt-ink); }
+  @media (max-width: 760px) { .call { grid-template-columns: 1fr; } .call > div + div { border-left: 0; border-top: 1px solid var(--rule); } }
+
+  .round { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 8px 32px; padding-top: 28px; border-top: 1px solid var(--rule); }
+  .round-num { font: 900 56px/0.9 "Roboto", sans-serif; color: var(--felt-ink); font-variant-numeric: tabular-nums; }
+  .round-body { display: grid; gap: 20px; min-width: 0; }
+  .outcome { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; }
+  .pill { font: 500 12px/1 "Roboto Mono", monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px; background: var(--felt); color: #F2F6F3; white-space: nowrap; }
+  .pill.flag { background: #A81F1A; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 640px; align-items: start; }
+  .single { max-width: 580px; }
+  .single.wide { max-width: 100%; }
+  .single.phone { max-width: 280px; }
+  .single.icon { max-width: 150px; }
+  .single img, .pair img { border: 1px solid var(--rule); }
+  @media (max-width: 760px) { .round { grid-template-columns: 1fr; } .round-num { font-size: 40px; } .pair { grid-template-columns: 1fr; } }
+
+  .split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .split > div { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 20px; display: grid; gap: 10px; align-content: start; }
+  .split ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+  @media (max-width: 760px) { .split { grid-template-columns: 1fr; } }
+
+  .next { list-style: none; padding: 0; margin: 0; display: grid; max-width: 720px; }
+  .next li { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+  .next li span:last-child { font: 500 13px/1.6 "Roboto Mono", monospace; color: var(--muted); white-space: nowrap; }
+  .next li.done span:last-child { color: var(--felt-ink); font-weight: 700; }
+
+  .todo { background: var(--todo-bg); color: var(--todo-ink); border: 2px dashed var(--todo-rule); border-radius: 10px; padding: 14px 16px; font-size: 16px; max-width: 66ch; }
+  .todo b { font: 500 12px/1.3 "Roboto Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+
+  details { border-top: 1px solid var(--rule); padding-top: 18px; }
+  summary { cursor: pointer; font-weight: 700; }
+  .log { overflow-x: auto; margin-top: 14px; }
+  .log table { border-collapse: collapse; font-size: 15px; min-width: 520px; }
+  .log td { padding: 7px 14px 7px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .log td:first-child { font: 500 13px/1.6 "Roboto Mono", monospace; color: var(--muted); }
+  footer { color: var(--muted); font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <div class="intro">
+      <div class="label">Case study &bull; Claude Code build &bull; Sept 22-24, 2026</div>
+      <h1>Hearts for Low Vision</h1>
+      <p class="lede">My mom plays Hearts on her iPhone. She has a visual impairment, and her commercial Hearts app fans all 13 cards into one overlapping row under a giant instruction box. I directed Claude Code to design and build a version made for her eyes, and I made every visual decision from side-by-side options at true phone size.</p>
+      <div class="facts">
+        <div><span class="label">My role</span><b>Product owner and design lead</b></div>
+        <div><span class="label">Builder</span><b>Claude Code</b></div>
+        <div><span class="label">Platform</span><b>iPhone Home Screen web app, works offline</b></div>
+        <div><span class="label">Status</span><b>Live; her first playtest is next</b></div>
+      </div>
+      <div class="links"><a href="../hearts/">Play Hearts &rarr;</a><a href="https://github.com/sghanna/claude/tree/main/hearts">Code on GitHub &rarr;</a></div>
+    </div>
+    <div class="hero-preview">
+      <div class="phone-frame"><img src="img/h3-hearts-final.png" alt="The Hearts game at iPhone size: four name boxes, the trick below them, and the hand in four suit rows with the playable row outlined in gold" width="600" height="1300"></div>
+      <figcaption>The shipped game at true iPhone 16e size, at a follow-suit moment.</figcaption>
+    </div>
+  </header>
+
+  <section>
+    <div class="prose">
+      <div class="label">The user and the problem</div>
+      <h2>Thirteen cards on a small screen</h2>
+      <p>Hearts deals each player 13 cards. Commercial apps overlap them in a single fan, so each card shows only a thin strip, and her rank and suit have to be read from that sliver. On a phone 390 points wide, the design has to show every card whole, stay readable when one suit runs long, and keep every tap target large.</p>
+    </div>
+    <div class="constraints">
+      <div class="constraint"><span class="big">13</span><p>Cards in a hand, every one fully visible and tappable.</p></div>
+      <div class="constraint"><span class="big">390 pt</span><p>Screen width of an iPhone 16e, held upright.</p></div>
+      <div class="constraint"><span class="big">4 rows</span><p>One per suit, so a suit is always in the same place.</p></div>
+      <div class="constraint"><span class="big">44 pt+</span><p>Smallest tap target, for slow, deliberate taps.</p></div>
+      <div class="constraint"><span class="big">7.2:1</span><p>Red rank contrast on a card, above WCAG AAA.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <div class="label">How I ran it</div>
+      <h2>Rules I set</h2>
+    </div>
+    <ul class="rules">
+      <li><strong>Every visual decision is a webpage.</strong> "Show me in a webpage anytime I need to make a visual decision," opened for me automatically, with the current version always among the options.</li>
+      <li><strong>Measure, don't estimate.</strong> Contrast ratios are measured from the rendered screen, and every layout is checked at true phone size.</li>
+      <li><strong>Each AI keeps its own site.</strong> My shared games site is "reserved for the winner of each new game," copied in only after I choose.</li>
+      <li><strong>Public pages keep her anonymous.</strong> Describe her condition "in vague terms to preserve patient anonymity."</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="prose">
+      <div class="label">Where I overrode the recommendation</div>
+      <h2>Claude recommended, I decided</h2>
+      <p>Claude gave a recommendation with every set of options. Three times I chose differently.</p>
+    </div>
+    <div class="calls">
+      <div class="call">
+        <div><span class="label">Claude recommended</span><p>"Moonrise": a calm, slow moon rising when she shoots the moon.</p></div>
+        <div><span class="label">My decision</span><p class="mine">"Hearts to the moon": the hearts and queen she took fly up into the moon.</p></div>
+        <div class="todo"><b>To add</b>Why you chose it.</div>
+      </div>
+      <div class="call">
+        <div><span class="label">Claude recommended</span><p>A softer dim on unplayable cards, keeping the Solitaire red.</p></div>
+        <div><span class="label">My decision</span><p class="mine">A deeper red ink on every card, reaching WCAG AAA everywhere.</p></div>
+        <div class="todo"><b>To add</b>Why you chose it.</div>
+      </div>
+      <div class="call">
+        <div><span class="label">Claude recommended</span><p>A heart medallion icon, the most different from her Solitaire icon.</p></div>
+        <div><span class="label">My decision</span><p class="mine">The ace and queen of the deck, with the selection glow and a border.</p></div>
+        <div class="todo"><b>To add</b>Why you chose it.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <div class="label">Design rounds</div>
+      <h2>From first design to shipped game</h2>
+    </div>
+
+    <article class="round">
+      <div class="round-num">1</div>
+      <div class="round-body">
+        <div class="prose">
+          <h3>One row per suit</h3>
+          <p>Claude's design, one entry in a three-way design comparison, puts her hand in four rows: clubs, diamonds, spades, hearts. When she must follow suit, the cards she can play are one whole row. Each player's card lands under their name, labeled "Led", "Winning" or "Takes it". Claude made its entry after seeing the other two and labeled it that way. I chose it.</p>
+        </div>
+        <div class="single phone">
+          <figure><img src="img/h1-prototype.png" alt="The first Suit Rows prototype: hand in four suit rows, two cards chosen and shown in the Pass to Michael slots" loading="lazy" width="600" height="1300"><figcaption>The first prototype, passing three cards.</figcaption></figure>
+        </div>
+        <div class="outcome"><span class="pill">Outcome</span><span>Selected Suit Rows.</span></div>
+      </div>
+    </article>
+
+    <article class="round">
+      <div class="round-num">2</div>
+      <div class="round-body">
+        <div class="prose">
+          <h3>A real hand tested the design</h3>
+          <p>During the review, my mom was dealt seven cards of one suit in a game she was playing, so I asked to see how the design would handle it. It failed: seven cards in one row overlap, and the next card clipped the 10 and covered half of each suit. The fix sizes every rank and suit to fit inside the strip that stays visible. Seven of one suit comes up in roughly 1 hand in 25.</p>
+        </div>
+        <div class="pair">
+          <figure><img src="img/h2-seven-before.png" alt="Seven hearts in one row, with the 10 clipped by the next card" loading="lazy" width="780" height="248"><figcaption>Before: the 10's second digit and most suits are covered.</figcaption></figure>
+          <figure><img src="img/h2-seven-after.png" alt="Seven hearts in one row, every rank and suit fully visible" loading="lazy" width="780" height="248"><figcaption>After: every rank and suit shows.</figcaption></figure>
+        </div>
+        <div class="outcome"><span class="pill flag">Rule locked</span><span>Every card keeps its rank and suit inside the visible strip.</span></div>
+      </div>
+    </article>
+
+    <article class="round">
+      <div class="round-num">3</div>
+      <div class="round-body">
+        <div class="prose">
+          <h3>From prototype to full game</h3>
+          <p>Claude built the complete game: passing left, right and across, hearts breaking, shooting the moon, three computer players, a save after every move, offline play, and English, Spanish and Vietnamese. The rules were tested with 5,000 simulated games (54,865 hands), and the screen with automated tap tests at four iPhone sizes, run again against the live site after every release.</p>
+        </div>
+        <div class="outcome"><span class="pill">Outcome</span><span>Full game live.</span></div>
+      </div>
+    </article>
+
+    <article class="round">
+      <div class="round-num">4</div>
+      <div class="round-body">
+        <div class="prose">
+          <h3>Delight, without moving anything</h3>
+          <p>I asked whether the game was Claude's best effort, with delight throughout the gameplay while staying low-vision friendly. Claude said no: it was correct and readable but plain. The layout stayed fixed. Claude added motion that explains (each card glides out of its player's name, and a finished trick sweeps to the winner), a gentle sound for each moment, announcements when hearts are broken or the queen of spades is played, celebrations sized to the moment, and a memory of games won and best score. I chose sky lanterns for a win and heart cards for a clean hand, and asked for a new design for shooting the moon.</p>
+        </div>
+        <div class="single phone">
+          <figure><img src="img/h4-moon.png" alt="Shooting the moon: the table dims to night, a glowing moon, and hearts flying up into it behind a night-blue banner" loading="lazy" width="600" height="1300"><figcaption>"Hearts to the moon," mid-celebration.</figcaption></figure>
+        </div>
+        <div class="outcome"><span class="pill">Outcome</span><span>Motion, sound and celebrations, each skipped or stilled when the phone asks for reduced motion.</span></div>
+      </div>
+    </article>
+
+    <article class="round">
+      <div class="round-num">5</div>
+      <div class="round-body">
+        <div class="prose">
+          <h3>Checked against WCAG</h3>
+          <p>To show which cards she can play, I first chose a gold outline plus a light dim on the rest. Then I asked Claude to "check the WCAG contrast guidelines against this option and give me a few other options to choose from with WCAG in mind." Measured from the screen, red ranks on dimmed cards were 4.3:1: AA, just short of AAA. I chose a deeper red ink, which reaches AAA on every card (7.2:1, and 5.4:1 dimmed).</p>
+        </div>
+        <div class="single wide">
+          <figure><img src="img/h5-wcag.png" alt="Four playable-card options side by side, each with measured contrast ratios" loading="lazy" width="1100" height="781"><figcaption>The options page: four approaches, each with contrast measured from the screen.</figcaption></figure>
+        </div>
+        <div class="outcome"><span class="pill flag">Rule locked</span><span>Red ranks meet WCAG AAA on every card, dimmed or not.</span></div>
+      </div>
+    </article>
+
+    <article class="round">
+      <div class="round-num">6</div>
+      <div class="round-body">
+        <div class="prose">
+          <h3>The Home Screen icon</h3>
+          <p>Six icon options were shown at real Home Screen size next to her Solitaire icon, on dark and light wallpapers. I chose the ace and queen, asked for six variations with switches for the selection glow and a border, and chose the first with both turned on.</p>
+        </div>
+        <div class="single icon">
+          <figure><img src="img/h6-icon.png" alt="Hearts icon: the queen of spades behind the ace of hearts, magenta glow on the ace, brass border" loading="lazy" width="256" height="256"><figcaption>The chosen icon.</figcaption></figure>
+        </div>
+        <div class="outcome"><span class="pill">Outcome</span><span>Icon shipped.</span></div>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <div class="prose">
+      <div class="label">Division of labor</div>
+      <h2>What Claude did, and what I did</h2>
+    </div>
+    <div class="split">
+      <div>
+        <h3>Claude Code</h3>
+        <ul>
+          <li>Designed the Suit Rows layout and built the full game.</li>
+          <li>Wrote the rules engine and computer players, tested over 5,000 simulated games.</li>
+          <li>Built every options page and measured contrast from the rendered screen.</li>
+          <li>Tested each release at four iPhone sizes, on this Mac and on the live site.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Shawn (product owner and design lead)</h3>
+        <ul>
+          <li>Chose the design and every visual option.</li>
+          <li>Brought the seven-of-a-suit hand from my mom's real game.</li>
+          <li>Asked for delight, then for a WCAG check of my own pick.</li>
+          <li>Set where each AI's work lives and how she is described in public.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="todo"><b>To add</b>My mom's reaction to Hearts on her own phone.</div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <div class="label">Project status</div>
+      <h2>Milestones</h2>
+    </div>
+    <ol class="next">
+      <li class="done"><span>Suit Rows design chosen</span><span>Shipped</span></li>
+      <li class="done"><span>Seven-of-a-suit fix</span><span>Shipped</span></li>
+      <li class="done"><span>Full rules, three computer players, saving, offline, three languages</span><span>Shipped</span></li>
+      <li class="done"><span>Motion, sound, announcements, celebrations, stats</span><span>Shipped</span></li>
+      <li class="done"><span>WCAG AAA red ink; playable cards outlined and dimmed</span><span>Shipped</span></li>
+      <li class="done"><span>Home Screen icon</span><span>Shipped</span></li>
+      <li><span>Playtest with my mom on her phone</span><span>Up next</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <details>
+      <summary>Version history</summary>
+      <div class="log">
+        <table>
+          <tr><td>1a5d7b7</td><td>New Home Screen icon</td></tr>
+          <tr><td>d802fe7</td><td>Six ace-and-queen icon versions with glow and border switches</td></tr>
+          <tr><td>9e4a1b4</td><td>Icon options page</td></tr>
+          <tr><td>6207143</td><td>Deeper red ink for WCAG AAA</td></tr>
+          <tr><td>b30c54c</td><td>Moon and playable-card picks; WCAG options</td></tr>
+          <tr><td>91997bc</td><td>Celebration picks and a new moon celebration</td></tr>
+          <tr><td>6cbf7be</td><td>Motion, sounds, announcements, celebrations, stats</td></tr>
+          <tr><td>47d4931</td><td>Moved to its own site</td></tr>
+          <tr><td>bfc6e7f</td><td>Full game from the Suit Rows design</td></tr>
+        </table>
+      </div>
+    </details>
+    <footer>Designed and directed by Shawn Hanna. Built with Claude Code.</footer>
+  </section>
+
+</div>
+</body>
+</html>
