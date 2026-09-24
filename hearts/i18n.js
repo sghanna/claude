@@ -5,6 +5,10 @@
 
   const STR = {
     en: {
+      heartsBroken: 'Hearts are broken', queenPlayed: 'Queen of spades played: 13 points',
+      takesQueen: '{name} takes the queen, <em>{pts}</em>', youTakeQueen: 'You take the queen, <em>{pts}</em>',
+      celClean: 'Clean hand! No points.', celMoon: 'You shot the moon!', celWin: 'You win!',
+      statGames: 'Games you have won: {w} of {n}', statBest: 'Your best final score: {n}', statNewBest: 'New personal best!',
       langName: 'English', title: 'Hearts', help: 'Help', menu: 'Menu',
       names: ['You', 'Michael', 'Jerry', 'Barbara'], pts: '{n} pts', pt1: '1 pt',
       none: 'No {suits}', passTo: 'Pass to', from: 'From', yourCard: 'Your<br>card', takeBack: 'Tap a card to take it back',
@@ -51,6 +55,10 @@
       card: (r, s) => `${r} of ${s}`
     },
     es: {
+      heartsBroken: 'Ya se rompieron los corazones', queenPlayed: 'Salió la reina de picas: 13 puntos',
+      takesQueen: '{name} gana la reina, <em>{pts}</em>', youTakeQueen: 'Ganas la reina, <em>{pts}</em>',
+      celClean: '¡Mano limpia! Sin puntos.', celMoon: '¡Tiro a la luna!', celWin: '¡Ganaste!',
+      statGames: 'Juegos ganados: {w} de {n}', statBest: 'Tu mejor puntuación final: {n}', statNewBest: '¡Nuevo récord personal!',
       langName: 'Español', title: 'Corazones', help: 'Ayuda', menu: 'Menú',
       names: ['Tú', 'Michael', 'Jerry', 'Barbara'], pts: '{n} pts', pt1: '1 pt',
       none: 'Sin {suits}', passTo: 'Pasar a', from: 'De', yourCard: 'Tu<br>carta', takeBack: 'Toca una carta para devolverla',
@@ -98,6 +106,10 @@
       article: r => (r === 'reina' || r === 'jota' ? 'la' : 'el')
     },
     vi: {
+      heartsBroken: 'Đã có người đánh cơ', queenPlayed: 'Đầm bích đã ra: 13 điểm',
+      takesQueen: '{name} ăn Đầm bích, <em>{pts}</em>', youTakeQueen: 'Bạn ăn Đầm bích, <em>{pts}</em>',
+      celClean: 'Ván sạch! Không điểm.', celMoon: 'Bạn đã ăn hết điểm!', celWin: 'Bạn thắng!',
+      statGames: 'Số trò chơi đã thắng: {w}/{n}', statBest: 'Điểm cuối tốt nhất: {n}', statNewBest: 'Kỷ lục mới!',
       langName: 'Tiếng Việt', title: 'Hearts', help: 'Trợ giúp', menu: 'Menu',
       names: ['Bạn', 'Michael', 'Jerry', 'Barbara'], pts: '{n} điểm', pt1: '1 điểm',
       none: 'Hết {suits}', passTo: 'Chuyền cho', from: 'Từ', yourCard: 'Lá<br>của bạn', takeBack: 'Chạm vào lá bài để lấy lại',

@@ -7,17 +7,22 @@
   const COLS = [1, 2, 3, 0];                 // name plates left to right: Michael, Jerry, Barbara, You
   const SUIT_ORDER = ['C', 'D', 'S', 'H'];   // hand rows, alternating black / red
   const INK = { red: '#c62f27', black: '#1b0a0a' };
-  const SAVE_KEY = 'claude-hearts-game-v1', SET_KEY = 'claude-hearts-settings-v1';
+  const SAVE_KEY = 'claude-hearts-game-v1', SET_KEY = 'claude-hearts-settings-v1', STATS_KEY = 'claude-hearts-stats-v1';
   const SPEEDS = { slow: { ai: 1300, pause: 3800 }, normal: { ai: 800, pause: 2400 } };
 
   const params = new URLSearchParams(location.search);
   const FAST = params.get('fast') === '1';   // automated tests only
   const SEED = params.get('seed');
+  // Options pages only: ?demo= shows a staged moment and never saves; ?celebrate= and ?playable= pick a style.
+  const DEMO = params.get('demo');
+  const CELEBRATE = ['ribbon', 'cards', 'lanterns'].includes(params.get('celebrate')) ? params.get('celebrate') : 'ribbon';
+  const PLAYABLE = ['outline', 'dim', 'both'].includes(params.get('playable')) ? params.get('playable') : 'outline';
+  if (FAST) FX.setSpeedScale(0.04);
 
   const $ = id => document.getElementById(id);
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode: play without saving */ } }
+    set(k, v) { if (DEMO) return; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode: play without saving */ } }
   };
 
   let settings = Object.assign({ lang: null, speed: 'slow', sound: false }, store.get(SET_KEY) || {});
@@ -27,6 +32,10 @@
   const rng = SEED ? H.makeRng(+SEED) : Math.random;
   let st = null, message = null, timers = [];
   let dims = { cw: 68, ch: 96, tw: 72, th: 100, lineW: 370, cardGap: 5, strip: 50 };
+  // Screen-only state that is never saved: a short announcement, the plate that just took a trick, etc.
+  const ui = { banner: null, bannerTimer: null, took: null, prevPts: [0, 0, 0, 0], newBest: false, busy: false };
+  let stats = Object.assign({ games: 0, wins: 0, best: null, clean: 0, moons: 0 }, store.get(STATS_KEY) || {});
+  const sound = kind => { if (settings.sound) FX.sound(kind); };
 
   /* ---------------- Saving ---------------- */
   function load() {
@@ -51,37 +60,99 @@
 
   function commit() { save(); render(); schedule(); }
 
-  function aiStep() {
-    if (st.phase !== 'play' || st.turn === YOU) return;
-    const seat = st.turn;
-    H.playCard(st, seat, H.aiPlay(st, seat));
+  const plateEl = seat => $('seats').children[COLS.indexOf(seat)];
+  const stageCardEl = seat => { const cell = $('stage').children[COLS.indexOf(seat)]; return cell && cell.querySelector('.card'); };
+
+  // A card was just played: sound, and a short announcement for the big moments.
+  function afterPlay(card, heartsWereBroken) {
     sound('play');
-    commit();
+    // Plain timeouts: the game's own timers are reset on every move.
+    if (card === 'QS') { announce(T.t('queenPlayed')); setTimeout(() => sound('queen'), 120); }
+    else if (H.suitOf(card) === 'H' && !heartsWereBroken) { announce(T.t('heartsBroken')); setTimeout(() => sound('hearts'), 120); }
   }
 
-  function collect() {
-    if (st.phase !== 'trickEnd') return;
+  function announce(html) {
+    clearTimeout(ui.bannerTimer);
+    ui.banner = html;
+    ui.bannerTimer = setTimeout(() => { ui.banner = null; renderStatus(); }, FAST ? 80 : 2600);
+  }
+
+  function aiStep() {
+    if (st.phase !== 'play' || st.turn === YOU) return;
+    const seat = st.turn, card = H.aiPlay(st, seat), broken = st.heartsBroken;
+    H.playCard(st, seat, card);
+    afterPlay(card, broken);
+    commit();
+    FX.flyFrom(stageCardEl(seat), plateEl(seat).getBoundingClientRect(), { scale: 0.45, opacity: 0.2 });
+  }
+
+  // The finished trick gathers into the winner's name, which glows; then play goes on.
+  async function collect() {
+    if (st.phase !== 'trickEnd' || ui.busy) return;
+    ui.busy = true;
+    clearTimers();
+    const w = st.trickWinner;
+    const pts = st.trick.reduce((n, p) => n + H.points(p.card), 0);
+    sound(w === YOU && pts ? 'points' : 'collect');
+    await FX.flyTo([...$('stage').querySelectorAll('.cell .card')], plateEl(w).getBoundingClientRect(), { stagger: 40 });
     H.collectTrick(st);
     message = null;
-    commit();
-    if (st.phase === 'handEnd' || st.phase === 'gameEnd') { sound('end'); showEnd(); }
+    ui.took = w;
+    setTimeout(() => { ui.took = null; renderSeats(); }, FAST ? 40 : 1000);
+    save();
+    render();
+    ui.busy = false;
+    if (st.phase === 'handEnd' || st.phase === 'gameEnd') return endOfHand();
+    schedule();
+  }
+
+  // Small wins get a small acknowledgment; the results wait until it has finished.
+  async function endOfHand() {
+    ui.newBest = recordHand();
+    const last = st.history[st.history.length - 1];
+    const kind = st.phase === 'gameEnd' && H.winners(st).includes(YOU) ? 'win'
+      : st.moon === YOU ? 'moon' : st.moon === null && last[YOU] === 0 ? 'clean' : null;
+    if (kind) {
+      sound(kind === 'clean' ? 'clean' : 'big');
+      await FX.celebrate({ kind, style: CELEBRATE, text: T.t(kind === 'clean' ? 'celClean' : kind === 'moon' ? 'celMoon' : 'celWin') });
+    } else sound('end');
+    showEnd();
+  }
+
+  // Remember her results on this phone. Runs once, when a hand has just been scored.
+  function recordHand() {
+    if (DEMO) return false;
+    const last = st.history[st.history.length - 1];
+    if (st.moon === YOU) stats.moons += 1;
+    else if (st.moon === null && last[YOU] === 0) stats.clean += 1;
+    let newBest = false;
+    if (st.phase === 'gameEnd') {
+      stats.games += 1;
+      if (H.winners(st).includes(YOU)) stats.wins += 1;
+      if (stats.best === null || st.scores[YOU] < stats.best) { newBest = stats.best !== null; stats.best = st.scores[YOU]; }
+    }
+    store.set(STATS_KEY, stats);
+    return newBest;
   }
 
   function startNewGame() {
     clearTimers();
     message = null;
+    ui.newBest = false;
     st = H.newGame(rng);
     commit();
   }
 
   /* ---------------- Player actions ---------------- */
   function tapCard(code) {
+    if (ui.busy) return;
     message = null;
     if (st.phase === 'pass') {
       const i = st.sel.indexOf(code);
       if (i >= 0) st.sel.splice(i, 1);
       else if (st.sel.length < 3) st.sel.push(code);
       else message = { key: 'limit' };
+      sound(message ? 'illegal' : 'select');
       save();
     } else if (st.phase === 'received') {
       message = { key: 'pressContinue' };
@@ -89,6 +160,7 @@
       const why = H.illegalReason(st, YOU, code);
       if (why) { st.sel = []; message = { key: why }; }
       else st.sel = st.sel[0] === code ? [] : [code];
+      sound(why ? 'illegal' : 'select');
       save();
     } else if (st.phase === 'play') {
       message = { key: 'waitFor', vars: { name: T.name(st.turn) } };
@@ -96,22 +168,37 @@
     render();
   }
 
-  function primaryAction() {
+  async function primaryAction() {
+    if (ui.busy) return;
     message = null;
     switch (st.phase) {
       case 'pass': {
         if (st.sel.length !== 3) return;
+        // The 3 chosen cards travel to the player they're passed to; the 3 new ones arrive from the giver.
+        ui.busy = true;
+        sound('collect');
+        await FX.flyTo([...$('stage').querySelectorAll('.card.preview')], plateEl(H.passTarget(YOU, st.passDir)).getBoundingClientRect(), { stagger: 70, scale: 0.4 });
         H.applyPasses(st, [st.sel.slice(), H.aiPass(st.hands[1]), H.aiPass(st.hands[2]), H.aiPass(st.hands[3])]);
-        return commit();
+        ui.busy = false;
+        commit();
+        const from = plateEl(H.passSource(YOU, st.passDir)).getBoundingClientRect();
+        $('stage').querySelectorAll('.card.received').forEach((el, i) => FX.flyFrom(el, from, { scale: 0.4, opacity: 0.2, duration: 380, delay: i * 80 }));
+        return;
       }
       case 'received':
         H.beginPlay(st);
         return commit();
-      case 'play':
+      case 'play': {
         if (st.turn !== YOU || st.sel.length !== 1) return;
-        H.playCard(st, YOU, st.sel[0]);
-        sound('play');
-        return commit();
+        const card = st.sel[0], broken = st.heartsBroken;
+        const handCard = $('hand').querySelector(`[data-card="${card}"]`);
+        const from = handCard && handCard.getBoundingClientRect();
+        H.playCard(st, YOU, card);
+        afterPlay(card, broken);
+        commit();
+        FX.flyFrom(stageCardEl(YOU), from);   // from her hand to her place on the table
+        return;
+      }
       case 'trickEnd':
         return collect();   // don't wait for the pause
       default:
@@ -235,11 +322,13 @@
     $('seats').innerHTML = COLS.map(seat => {
       const turn = st.phase === 'play' && st.turn === seat;
       const hp = st.handPts[seat];
+      const bump = hp > ui.prevPts[seat];
       const pts = st.scores[seat] === 1 ? T.t('pt1') : T.t('pts', { n: st.scores[seat] });
-      return `<div class="plate${turn ? ' turn' : ''}${seat === YOU ? ' you' : ''}" role="group" aria-label="${T.name(seat)}, ${pts}${showHandPts && hp ? ', +' + hp : ''}">` +
+      return `<div class="plate${turn ? ' turn' : ''}${seat === YOU ? ' you' : ''}${ui.took === seat ? ' took' : ''}" role="group" aria-label="${T.name(seat)}, ${pts}${showHandPts && hp ? ', +' + hp : ''}">` +
         `<span class="name">${T.name(seat)}</span><span class="pts">${pts}</span>` +
-        (showHandPts && hp ? `<span class="badge" aria-hidden="true">+${hp}</span>` : '') + '</div>';
+        (showHandPts && hp ? `<span class="badge${bump ? ' bump' : ''}" aria-hidden="true">+${hp}</span>` : '') + '</div>';
     }).join('');
+    ui.prevPts = st.handPts.slice();
     $('seats').querySelectorAll('.name, .pts').forEach(el => fitText(el, 18, 13));
   }
 
@@ -302,6 +391,7 @@
 
   function statusHTML() {
     if (message) return T.t(message.key, messageVars(message));
+    if (ui.banner) return `<span class="announce">${ui.banner}</span>`;
     switch (st.phase) {
       case 'pass': {
         const name = T.name(H.passTarget(YOU, st.passDir)), left = 3 - st.sel.length;
@@ -323,7 +413,9 @@
       case 'trickEnd': {
         const pts = st.trick.reduce((n, p) => n + H.points(p.card), 0);
         const ptsText = pts === 0 ? T.t('noPoints') : pts === 1 ? T.t('onePoint') : T.t('nPoints', { n: pts });
-        return st.trickWinner === YOU ? T.t('youTake', { pts: ptsText }) : T.t('takesTrick', { name: T.name(st.trickWinner), pts: ptsText });
+        const queen = st.trick.some(p => p.card === 'QS');
+        if (st.trickWinner === YOU) return T.t(queen ? 'youTakeQueen' : 'youTake', { pts: ptsText });
+        return T.t(queen ? 'takesQueen' : 'takesTrick', { name: T.name(st.trickWinner), pts: ptsText });
       }
       case 'handEnd':
         return T.t('handEnd', { n: st.handNo });
@@ -349,19 +441,21 @@
     const legal = inPlay ? new Set(H.legalPlays(st, YOU)) : null;
     const restricted = legal && st.hands[YOU].some(c => !legal.has(c));
     const choosing = st.phase === 'pass' || inPlay;
+    const outline = PLAYABLE !== 'dim', dim = PLAYABLE !== 'outline';
     $('hand').innerHTML = lines.map(line => {
       if (line.void) {
         return `<div class="line void" role="group">${suitIcon(line.suit, 'rgba(255,255,255,0.88)')}${T.t('none', { suits: T.suits(line.suit) })}</div>`;
       }
       const n = line.cards.length;
       const step = n <= 5 ? dims.cw + dims.cardGap : (dims.lineW - dims.cw) / (n - 1);
-      const whole = restricted && st.hands[YOU].filter(c => H.suitOf(c) === line.suit).every(c => legal.has(c));
+      const whole = outline && restricted && st.hands[YOU].filter(c => H.suitOf(c) === line.suit).every(c => legal.has(c));
       const cards = line.cards.map((code, i) => {
         const sel = st.sel.includes(code);
         const cls = ['card'];
         if (sel) cls.push('selected');
         if (st.phase === 'received' && st.received.includes(code)) cls.push('received');
-        if (restricted && !whole && legal.has(code) && !sel) cls.push('legal-one');
+        if (outline && restricted && !whole && legal.has(code) && !sel) cls.push('legal-one');
+        if (dim && restricted && !legal.has(code)) cls.push(PLAYABLE === 'both' ? 'unplayable soft' : 'unplayable');
         const pressed = choosing ? ` aria-pressed="${sel}"` : '';
         const blocked = restricted && !legal.has(code) ? ' aria-disabled="true"' : '';
         return `<button type="button" class="${cls.join(' ')}" data-card="${code}" style="left:${r2(i * step)}px;z-index:${i + 1}"` +
@@ -435,7 +529,14 @@
     if (!over) {
       const nextDir = H.PASS_CYCLE[st.handNo % 4];
       body += `<p class="note">${nextDir === 'hold' ? T.t('nextHold') : T.t('nextPass', { dir: T.dir(nextDir) })}</p>`;
-    } else body += `<p class="note">${T.t('scoreNote')}</p>`;
+    } else {
+      if (ui.newBest) body += `<p class="moon">${T.t('statNewBest')}</p>`;
+      if (stats.games) {
+        body += `<p class="note">${T.t('statGames', { w: stats.wins, n: stats.games })}</p>`;
+        if (stats.best !== null) body += `<p class="note">${T.t('statBest', { n: stats.best })}</p>`;
+      }
+      body += `<p class="note">${T.t('scoreNote')}</p>`;
+    }
     $('end-title').textContent = title;
     $('end-body').innerHTML = body;
     $('end-next').textContent = over ? T.t('btnPlayAgain') : T.t('btnNextHand');
@@ -478,32 +579,8 @@
     document.title = T.t('title');
   }
 
-  /* ---------------- Sound (off unless turned on in Settings) ---------------- */
-  let actx = null;
-  function audio() {
-    if (!actx) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; actx = new A(); }
-    if (actx.state === 'suspended') actx.resume();
-    return actx;
-  }
-  function sound(kind) {
-    if (!settings.sound) return;
-    try {
-      const ctx = audio();
-      if (!ctx) return;
-      const notes = kind === 'end' ? [[523, 0], [659, 0.16], [784, 0.32]] : [[440, 0]];
-      notes.forEach(([f, at]) => {
-        const o = ctx.createOscillator(), g = ctx.createGain(), t0 = ctx.currentTime + at;
-        o.type = 'triangle'; o.frequency.value = f;
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(kind === 'end' ? 0.12 : 0.07, t0 + 0.015);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + (kind === 'end' ? 0.35 : 0.1));
-        o.connect(g); g.connect(ctx.destination); o.start(t0); o.stop(t0 + 0.4);
-      });
-    } catch (e) { /* no sound available */ }
-  }
-
   /* ---------------- Wiring ---------------- */
-  document.addEventListener('pointerdown', () => { if (settings.sound) try { audio(); } catch (e) { /* ignore */ } }, true);
+  document.addEventListener('pointerdown', () => { if (settings.sound) FX.unlock(); }, true);   // phones only allow sound after a tap
   $('hand').addEventListener('click', e => { const c = e.target.closest('button.card'); if (c) tapCard(c.dataset.card); });
   $('stage').addEventListener('click', e => { const c = e.target.closest('button[data-remove]'); if (c && st.phase === 'pass') tapCard(c.dataset.remove); });
   $('primary-action').addEventListener('click', primaryAction);
@@ -527,7 +604,7 @@
     settings[key] = key === 'sound' ? val === 'true' : val;
     store.set(SET_KEY, settings);
     if (key === 'lang') { T.set(val); applyLanguage(); render(); }
-    if (key === 'sound' && settings.sound) sound('play');
+    if (key === 'sound' && settings.sound) sound('clean');   // a sample, so she hears what "on" means
     if (key === 'speed') schedule();
     showSettings();
   });
@@ -543,11 +620,43 @@
     navigator.serviceWorker.register('sw.js').catch(() => { /* still playable online */ });
   }
 
+  /* ---------------- Demo moments for the options pages (never saved) ---------------- */
+  function runDemo(kind) {
+    const r = H.makeRng(12);
+    st = H.newGame(r);
+    H.applyPasses(st, [0, 1, 2, 3].map(i => H.aiPass(st.hands[i])));
+    H.beginPlay(st);
+    const step = () => { if (st.phase === 'play') H.playCard(st, st.turn, H.aiPlay(st, st.turn)); else H.collectTrick(st); };
+    if (kind === 'follow') {   // stop at her turn when she must follow suit
+      for (let i = 0; i < 400 && st.phase !== 'handEnd'; i++) {
+        if (st.phase === 'play' && st.turn === YOU && st.trickNo > 0 && st.trick.length && H.legalPlays(st, YOU).length < st.hands[YOU].length) break;
+        step();
+      }
+      return render();
+    }
+    while (st.phase !== 'handEnd' && st.phase !== 'gameEnd') step();
+    const results = { clean: [[0, 13, 9, 4]], moon: [[0, 26, 26, 26]], win: [[36, 80, 67, 81], [2, 24, 0, 0]] }[kind] || [[0, 13, 9, 4]];
+    st.history = results;
+    st.scores = results.reduce((a, h) => a.map((v, i) => v + h[i]), [0, 0, 0, 0]);
+    st.moon = kind === 'moon' ? YOU : null;
+    st.phase = kind === 'win' ? 'gameEnd' : 'handEnd';
+    stats = { games: 6, wins: 3, best: 38, clean: 4, moons: 1 };
+    render();
+    ui.newBest = kind === 'win';
+    setTimeout(async () => {
+      const k = kind === 'moon' ? 'moon' : kind === 'win' ? 'win' : 'clean';
+      sound(k === 'clean' ? 'clean' : 'big');
+      await FX.celebrate({ kind: k, style: CELEBRATE, text: T.t(k === 'clean' ? 'celClean' : k === 'moon' ? 'celMoon' : 'celWin') });
+      showEnd();
+    }, 400);
+  }
+
   // For automated tests only.
-  window.__hearts = { state: () => st, settings: () => settings, commit, rules: H, load: s => { st = s; commit(); }, hold: clearTimers, resume: schedule };
+  window.__hearts = { state: () => st, settings: () => settings, stats: () => stats, announce: h => { announce(h); renderStatus(); }, commit, rules: H, load: s => { st = s; commit(); }, hold: clearTimers, resume: schedule };
 
   /* ---------------- Start ---------------- */
   applyLanguage();
+  if (DEMO) { runDemo(DEMO); return; }
   const couldNotRestore = load();
   commit();
   if (couldNotRestore) { $('last-body').innerHTML = `<p>${T.t('restoreFail')}</p>`; $('last-title').textContent = T.t('title'); openDialog('last-dialog'); }

@@ -25,19 +25,35 @@ Then open http://127.0.0.1:8767/hearts/. For a phone-sized view in Chrome or Saf
 - **Saving.** Saves after every action. Closing the app or losing power mid-hand resumes exactly where she was. A damaged save is detected, explained, and replaced with a new game.
 - **Works offline** after the first visit, and can be added to the Home Screen as an app (icon, name "Hearts", full screen).
 - **English, Spanish, Vietnamese.** Chosen automatically from the phone's language, changeable in Settings, or via `?lang=es` / `?lang=vi`. **The Spanish and Vietnamese are Claude's own translations and need a native speaker to check them.**
-- **Sound** is off by default: a soft tick per card and a short chime at the end of a hand.
+- **Sound** is off by default (Menu, then Settings). When on, each moment has its own gentle sound: a tick when a card is chosen, a soft low note when a tap isn't allowed, a card landing on the felt, a sweep when a trick is gathered, a low two-note "uh-oh" when she takes points, a deep note when the queen of spades falls, a bell when hearts are broken, and a chime or short fanfare for good moments. All sounds are generated in the app, so they work offline. An iPhone on silent plays none of them.
 - **Portrait only.** Turning the phone sideways shows "Please turn your phone upright to play."
 
-## Tested (Sept 23, 2026)
+## Delight (added Sept 24, 2026)
+
+The layout never moves. These additions explain what's happening and reward good moments:
+
+- **Motion that explains.** A card glides out of the player's name box into their place on the table, and hers flies up from her hand. A finished trick gathers into the winner's name box, which glows. Passed cards travel to the receiving player, and the new ones arrive from the giver. Each movement takes about a third of a second. Phones set to Reduce Motion skip all of it.
+- **Announcements** in the gold status line: "Hearts are broken" and "Queen of spades played: 13 points". The trick result names the queen when someone takes it. A player's red "+3" points badge bumps when it grows.
+- **Celebrations sized to the moment:** a short one for a clean hand (no points), bigger ones for shooting the moon and winning. The results box waits until the celebration has finished. There are three styles; the gold ribbon is live until Shawn picks.
+- **Remembers her.** The game-over box shows games won, her best final score, and "New personal best!" when she beats it. These are kept on her phone only.
+
+**Options pages** (a visual choice for Shawn):
+- https://sghanna.github.io/claude/hearts/options-celebrations.html: gold ribbon (live), heart-card shower, or sky lanterns
+- https://sghanna.github.io/claude/hearts/options-playable.html: which cards she can play, shown as outline only (live), outline plus a light dim, or a strong dim
+
+## Tested (Sept 23-24, 2026)
 
 - `node hearts/tests/rules.test.mjs 5000` (from ~/claude): 30 rule checks plus 5,000 simulated games (54,865 hands, 713,245 tricks). Every play was legal, no card was ever lost or duplicated, every hand scored 26 (or 78 when someone shot the moon), and every game ended. All passed.
-- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 3`: 67 checks, all passed, in WebKit (Safari's engine). They cover:
+- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 61 checks, all passed, in WebKit (Safari's engine). They cover:
   - 3 complete games played through real taps, with no text overflow or scrolling at any step,
   - illegal taps explained,
   - save and restore mid-hand, and a damaged save,
   - the menus, the guarded new game, Last trick and Scores,
   - all 3 languages, including 2 full hands each in Spanish and Vietnamese at 375 x 667,
-  - 13 cards on screen with 44 px or larger targets at 390 x 844, 390 x 763, 390 x 740 and 375 x 667.
+  - 13 cards on screen with 44 px or larger targets at 390 x 844, 390 x 763, 390 x 740 and 375 x 667,
+  - a full game with motion and sound on (nothing stalls, stats recorded exactly once, celebrations clean up),
+  - the options-page demos, which never touch the real saved game.
+- Every animation and celebration was also captured mid-motion (slowed 15x) and checked by eye, including the Reduce Motion version.
 - Offline play was checked in Chromium, because Playwright's WebKit can't reload any page while offline.
 - Screenshots of every stage of a game were checked by eye in all three languages.
 
@@ -51,10 +67,12 @@ Then open http://127.0.0.1:8767/hearts/. For a phone-sized view in Chrome or Saf
 ## Files
 
 - `index.html`, `style.css`: the screen
-- `app.js`: taps, drawing, pacing, saving
+- `app.js`: taps, drawing, pacing, saving, stats
+- `fx.js`: motion, sounds and celebrations
+- `options-*.html`, `options.css`: side-by-side choices for Shawn (not part of the installed app)
 - `rules.js`: rules and computer players, no screen code, so Node can test it
 - `i18n.js`: all words in three languages
-- `glyphs.js`: the traced card lettering from ~/agy-solitaire
+- `glyphs.js`: the traced card lettering from agy-solitaire
 - `sw.js`: the offline copy
 - `manifest.json`, `icon-*.png`, `icon.svg`: Home Screen app setup
 - `tests/`: the two test suites; `tests/shots/` holds screenshots at each phone size

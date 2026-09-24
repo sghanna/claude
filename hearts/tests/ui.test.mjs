@@ -40,7 +40,9 @@ async function playGame(page, label) {
     if (!(await fits(page))) seen.layoutProblems++;
     if (!(await page.locator('#status').textContent()).trim()) seen.statusEmpty++;
     if (s.phase === 'gameEnd') {
-      ok(await page.locator('#end-dialog').isVisible(), label + ': game-over dialog shows');
+      // A celebration may play first; the results follow it.
+      const shown = await page.locator('#end-dialog').waitFor({ state: 'visible', timeout: 10000 }).then(() => true, () => false);
+      ok(shown, label + ': game-over dialog shows');
       break;
     }
     if (s.phase === 'pass') {
@@ -242,6 +244,53 @@ for (const [w, h] of [[390, 844], [390, 763], [390, 740], [375, 667]]) {
     ok(false, 'offline: service worker not active (' + ready + ')');
   }
   await chrome.close();
+}
+
+// 7. A full game with motion and sound on: nothing stalls, stats are recorded once, celebrations clean up.
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'no-preference' });
+  await ctx.addInitScript(() => { if (!localStorage.getItem('claude-hearts-settings-v1')) localStorage.setItem('claude-hearts-settings-v1', JSON.stringify({ lang: 'en', speed: 'slow', sound: true })); });
+  const page = await ctx.newPage();
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await page.goto(BASE + 'index.html?fast=1&seed=701');
+  await page.waitForFunction(() => window.__hearts);
+  const t0 = Date.now();
+  for (let i = 0; i < 6000 && Date.now() - t0 < 240000; i++) {
+    const s = await state(page);
+    if (s.phase === 'gameEnd' && await page.locator('#end-dialog').isVisible()) break;
+    if (s.phase === 'pass') {
+      for (const c of s.hands[0].slice(0, 3)) await page.locator(`#hand [data-card="${c}"]`).tap();
+      await page.locator('#primary-action').tap();
+      await page.waitForFunction(() => window.__hearts.state().phase !== 'pass');
+    } else if (s.phase === 'received') { await page.locator('#primary-action').tap(); await page.waitForFunction(() => window.__hearts.state().phase !== 'received'); }
+    else if (s.phase === 'play' && s.turn === 0) {
+      const legal = await page.evaluate(() => window.__hearts.rules.legalPlays(window.__hearts.state(), 0));
+      await page.locator(`#hand [data-card="${legal[legal.length - 1]}"]`).tap();
+      await page.locator('#primary-action').tap();
+      await page.waitForFunction(() => { const x = window.__hearts.state(); return !(x.phase === 'play' && x.turn === 0); });
+    } else if (s.phase === 'handEnd' && await page.locator('#end-dialog').isVisible()) await page.locator('#end-next').tap();
+    else await page.waitForTimeout(15);
+  }
+  const s = await state(page), stats = await page.evaluate(() => window.__hearts.stats());
+  ok(s.phase === 'gameEnd', `motion and sound on: full game finished (${s.handNo} hands)`);
+  ok(stats.games === 1, 'motion and sound on: stats recorded exactly once');
+  ok(await page.locator('.celebrate').count() === 0 && errs.length === 0, 'motion and sound on: celebrations cleaned up, no page errors ' + errs.join(' | '));
+  await ctx.close();
+}
+
+// 8. Options pages: demos render and never touch the real saved game.
+{
+  const page = await newPage(390, 844, '&seed=5');
+  const before = await page.evaluate(() => localStorage.getItem('claude-hearts-game-v1'));
+  for (const q of ['demo=follow&playable=both', 'demo=win&celebrate=lanterns', 'demo=clean&celebrate=cards', 'demo=moon&celebrate=ribbon']) {
+    await page.goto(BASE + 'index.html?' + q);
+    await page.waitForFunction(() => window.__hearts);
+  }
+  await page.waitForSelector('#end-dialog:not([hidden])', { timeout: 15000 });
+  const after = await page.evaluate(() => localStorage.getItem('claude-hearts-game-v1'));
+  ok(after === before, 'demo pages never overwrite the saved game');
+  ok(page.errors.length === 0, 'demo pages: no page errors ' + page.errors.join(' | '));
+  await page.close();
 }
 
 await browser.close();

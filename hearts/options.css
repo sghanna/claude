@@ -1,0 +1,18 @@
+/* Shared style for the side-by-side options pages. */
+:root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #f7f0df; background: #111b17; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 36px 24px 60px; }
+header { max-width: 1280px; margin: auto; }
+h1 { font: 600 clamp(30px, 3.6vw, 46px)/1.1 Georgia, serif; margin: 6px 0 12px; }
+.eyebrow { font-size: 13px; font-weight: 750; letter-spacing: 2px; color: #e5c47e; text-transform: uppercase; }
+.intro { font-size: 18px; line-height: 1.55; max-width: 860px; color: #d3dbd5; }
+.row { display: flex; justify-content: center; gap: 28px; flex-wrap: wrap; max-width: 1280px; margin: 26px auto 0; }
+article { width: 400px; max-width: 100%; }
+h2 { font-size: 22px; margin: 12px 0 6px; }
+article p { color: #bdcbbf; line-height: 1.5; margin: 0 0 12px; min-height: 102px; font-size: 17px; }
+.phone { width: 398px; max-width: 100%; border: 4px solid #59675e; border-radius: 25px; overflow: hidden; box-shadow: 0 15px 35px #0006; }
+iframe { display: block; width: 390px; height: 844px; border: 0; background: #0c2419; }
+.moments { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+button { font: 700 16px inherit; min-height: 44px; border: 1px solid #9c8964; border-radius: 22px; background: #182a22; color: #f7f0df; padding: 8px 16px; cursor: pointer; }
+button[aria-pressed=true] { background: #ead19a; color: #17251d; border-color: #ead19a; }
+button:focus-visible { outline: 3px solid #fa63eb; outline-offset: 3px; }
