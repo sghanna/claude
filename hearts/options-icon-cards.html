@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<style>
+.row { max-width: 1320px; }
+article p { min-height: 80px; }
+.big { display: block; width: 180px; height: 180px; border-radius: 40px; margin: 6px 0 14px; box-shadow: 0 10px 26px #000a; }
+.toggles { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+.home { display: flex; gap: 22px; padding: 16px 20px; border-radius: 22px; margin: 0 0 12px; }
+.home.dark { background: linear-gradient(160deg, #1f2d4d, #0b1020); }
+.home.light { background: linear-gradient(160deg, #f3efe6, #c9d6e3); }
+.app { width: 60px; text-align: center; font: 500 12px -apple-system, BlinkMacSystemFont, sans-serif; }
+.app img { display: block; width: 60px; height: 60px; border-radius: 13.5px; margin-bottom: 5px; }
+.dark .app { color: #fff; }
+.light .app { color: #111; }
+</style>
+<title>Hearts - ace and queen icon versions (Claude)</title>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Claude Hearts: a visual choice for Shawn</div>
+  <h1>Ace and queen: six versions</h1>
+  <p class="intro">Option 4 from the icon page, drawn six ways. Most make the cards bigger than the icon so they run off the edges; that makes the A, the Q and the heart larger at Home Screen size. Under each icon, switch the magenta selection glow (on the ace, as when she chooses a card in the game) and a brass border around the whole icon on or off. Each is shown next to her Solitaire icon at real size.</p>
+</header>
+<main class="row" id="options"></main>
+<script src="glyphs.js"></script>
+<script>
+const SOLITAIRE = 'https://sghanna.github.io/mom-games/solitaire/icons/icon-180.png';
+const RED = '#a81f1a', INK = '#1b0a0a', BRASS = '#fbbf24';
+let uid = 0;
+
+function glyph(key, x, y, h, color, rank) {   // height-driven; ranks share the 171-unit window so every rank has the same scale
+  const g = GLYPHS[key], b = g.box, win = rank ? [b[0], 15, b[2], 171] : b, w = win[2] * h / win[3];
+  return `<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${win.join(' ')}" overflow="visible"><path transform="translate(0,${g.h}) scale(0.1,-0.1)" d="${g.d}" fill="${color}"/></svg>`;
+}
+function centered(key, cx, cy, h, color) { const b = GLYPHS[key].box, w = b[2] * h / b[3]; return glyph(key, cx - w / 2, cy - h / 2, h, color); }
+
+// One card: rank top-left at 30% of the card's height, suit below, same proportions as the icon on the options page.
+function card(c, glow) {
+  const { x, y, w, h, rot, rank, suit, color } = c, cx = x + w / 2, cy = y + h / 2, r = w * 0.104;
+  const ring = glow ? `<rect x="${x - 4}" y="${y - 4}" width="${w + 8}" height="${h + 8}" rx="${r + 4}" fill="none" stroke="#ff00ff" stroke-width="16" filter="url(#glow${uid})"/>` +
+    `<rect x="${x - 4}" y="${y - 4}" width="${w + 8}" height="${h + 8}" rx="${r + 4}" fill="none" stroke="#ff00ff" stroke-width="12"/>` : '';
+  return `<g transform="rotate(${rot} ${cx} ${cy})">` +
+    `<rect x="${x + 6}" y="${y + 10}" width="${w}" height="${h}" rx="${r}" fill="#000" opacity=".45"/>${ring}` +
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="url(#ivory${uid})" stroke="${BRASS}" stroke-width="9"/>` +
+    glyph(rank, x + w * 0.104, y + h * 0.069, h * 0.3, color, true) + centered(suit, cx, y + h * 0.64, h * 0.36, color) + '</g>';
+}
+
+function icon(layout, { glow, border }) {
+  uid += 1;
+  const [queen, ace] = layout;
+  const defs = `<defs><radialGradient id="felt${uid}" cx="50%" cy="35%" r="75%"><stop offset="0" stop-color="#1f5238"/><stop offset=".6" stop-color="#0f2c1f"/><stop offset="1" stop-color="#05130d"/></radialGradient>` +
+    `<linearGradient id="ivory${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#fafaf6"/><stop offset="1" stop-color="#e9e8e0"/></linearGradient>` +
+    `<filter id="glow${uid}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="16"/></filter></defs>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">${defs}<rect width="512" height="512" fill="url(#felt${uid})"/>` +
+    card({ ...queen, rank: 'Q', suit: 'big_S', color: INK }, false) + card({ ...ace, rank: 'A', suit: 'big_H', color: RED }, glow) +
+    (border ? `<rect x="12" y="12" width="488" height="488" rx="104" fill="none" stroke="${BRASS}" stroke-width="18"/>` : '') + '</svg>';
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+// Queen first (behind), then ace (in front). Sizes past 512 run off the icon's edges on purpose.
+const versions = [
+  ['Version 1: as shown before', 'Both cards fit inside the icon, like option 4 on the icon page.',
+    [{ x: 56, y: 48, w: 250, h: 350, rot: -12 }, { x: 206, y: 112, w: 250, h: 350, rot: 8 }]],
+  ['Version 2: a bit bigger', 'Both cards about a fifth larger, running off the bottom and right edges.',
+    [{ x: 24, y: 40, w: 295, h: 413, rot: -12 }, { x: 196, y: 118, w: 295, h: 413, rot: 8 }]],
+  ['Version 3 (my recommendation): big ace', 'The ace fills most of the icon with the queen peeking out behind it. The largest A and heart of the six, and the Q still reads.',
+    [{ x: 20, y: 30, w: 260, h: 364, rot: -16 }, { x: 150, y: 96, w: 340, h: 476, rot: 6 }]],
+  ['Version 4: tops of the cards', 'Two large cards cut off at the bottom, so the space goes to the letters, like a hand of cards held up.',
+    [{ x: 0, y: 92, w: 330, h: 462, rot: -6 }, { x: 190, y: 150, w: 330, h: 462, rot: 5 }]],
+  ['Version 5: straight', 'No tilt. Two large, upright cards overlapping, running off the bottom edge.',
+    [{ x: 22, y: 40, w: 290, h: 406, rot: 0 }, { x: 200, y: 106, w: 290, h: 406, rot: 0 }]],
+  ['Version 6: wide fan', 'A wider fan, with the outer corners running off the sides and bottom.',
+    [{ x: 8, y: 62, w: 300, h: 420, rot: -18 }, { x: 214, y: 92, w: 300, h: 420, rot: 15 }]]
+];
+
+const state = versions.map(() => ({ glow: false, border: false }));
+function draw(i) {
+  const src = icon(versions[i][2], state[i]);
+  document.querySelectorAll(`[data-icon="${i}"]`).forEach(img => { img.src = src; });
+  document.querySelectorAll(`[data-toggle][data-i="${i}"]`).forEach(b => b.setAttribute('aria-pressed', String(state[i][b.dataset.toggle])));
+}
+document.getElementById('options').innerHTML = versions.map(([title, text], i) => `
+  <article>
+    <div class="eyebrow">${title.split(':')[0]}</div>
+    <h2>${title.split(': ')[1].charAt(0).toUpperCase() + title.split(': ')[1].slice(1)}</h2>
+    <p>${text}</p>
+    <img class="big" data-icon="${i}" alt="${title} icon">
+    <div class="toggles">
+      <button type="button" data-toggle="glow" data-i="${i}">Selection glow</button>
+      <button type="button" data-toggle="border" data-i="${i}">Icon border</button>
+    </div>
+    <div class="home dark"><div class="app"><img src="${SOLITAIRE}" alt="">Solitaire</div><div class="app"><img data-icon="${i}" alt="">Hearts</div></div>
+    <div class="home light"><div class="app"><img src="${SOLITAIRE}" alt="">Solitaire</div><div class="app"><img data-icon="${i}" alt="">Hearts</div></div>
+  </article>`).join('');
+document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', () => {
+  const i = +b.dataset.i; state[i][b.dataset.toggle] = !state[i][b.dataset.toggle]; draw(i);
+}));
+versions.forEach((v, i) => draw(i));
+</script>
+</body>
+</html>
