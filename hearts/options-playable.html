@@ -23,7 +23,7 @@ ul.wcag li { margin: 0 0 6px; }
 </header>
 <main class="row">
   <article>
-    <div class="eyebrow">Option 1: your pick (live now)</div>
+    <div class="eyebrow">Option 1: your first pick</div>
     <h2>Outline and light dim</h2>
     <p>Gold outline around the playable row. Cards she can't play dim to 72%. It passes AA everywhere, but red ranks on dimmed cards fall just short of AAA.</p>
     <ul class="wcag">
@@ -32,7 +32,7 @@ ul.wcag li { margin: 0 0 6px; }
       <li>Red rank, full: <span class="pass">5.4:1</span> (AAA)</li>
       <li>Gold outline vs felt: <span class="pass">5.9:1</span> (passes)</li>
     </ul>
-    <div class="phone"><iframe title="Outline and light dim" src="index.html?demo=follow&amp;playable=both"></iframe></div>
+    <div class="phone"><iframe title="Outline and light dim" src="index.html?demo=follow&amp;playable=both&amp;red=classic"></iframe></div>
   </article>
   <article>
     <div class="eyebrow">Option 2: my recommendation</div>
@@ -44,10 +44,10 @@ ul.wcag li { margin: 0 0 6px; }
       <li>Red rank, full: <span class="pass">5.4:1</span> (AAA)</li>
       <li>Gold outline vs felt: <span class="pass">5.9:1</span> (passes)</li>
     </ul>
-    <div class="phone"><iframe title="Outline and softer dim" src="index.html?demo=follow&amp;playable=soft"></iframe></div>
+    <div class="phone"><iframe title="Outline and softer dim" src="index.html?demo=follow&amp;playable=soft&amp;red=classic"></iframe></div>
   </article>
   <article>
-    <div class="eyebrow">Option 3: most contrast</div>
+    <div class="eyebrow">Option 3: your pick (live now)</div>
     <h2>Outline, light dim, deeper red</h2>
     <p>Your pick with a deeper red ink on every card. Red ranks reach AAA even by the stricter small-text standard. The catch: red and black suits end up closer in brightness (2.6:1 instead of 3.5:1), so she tells them apart mostly by color. The red also no longer matches Solitaire.</p>
     <ul class="wcag">
@@ -68,7 +68,7 @@ ul.wcag li { margin: 0 0 6px; }
       <li>Gold ring vs felt: <span class="pass">7.4:1</span> (passes)</li>
       <li>Dimming: none</li>
     </ul>
-    <div class="phone"><iframe title="Gold ring on each playable card" src="index.html?demo=follow&amp;playable=ring"></iframe></div>
+    <div class="phone"><iframe title="Gold ring on each playable card" src="index.html?demo=follow&amp;playable=ring&amp;red=classic"></iframe></div>
   </article>
 </main>
 <p class="note">All four meet WCAG AA, and none of them depends on color alone: the outline or ring is a shape, and dimming changes brightness. Dimming on its own would not be enough (the dimmed card face is only 1.6-2.0:1 from a bright one), which is why every dimming option keeps the gold outline.</p>

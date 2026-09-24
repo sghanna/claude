@@ -107,7 +107,7 @@
   function heartCard() {
     // glyphs.js declares GLYPHS as a top-level const, which is global but not a property of window.
     const g = typeof GLYPHS !== 'undefined' ? GLYPHS.big_H : null;
-    const heart = g ? `<svg x="9" y="16" width="34" height="34" viewBox="${g.box.join(' ')}"><path transform="translate(0,${g.h}) scale(0.1,-0.1)" d="${g.d}" fill="#c62f27"/></svg>` : '';
+    const heart = g ? `<svg x="9" y="16" width="34" height="34" viewBox="${g.box.join(' ')}"><path transform="translate(0,${g.h}) scale(0.1,-0.1)" d="${g.d}" fill="#a81f1a"/></svg>` : '';
     return `<svg viewBox="0 0 52 72" width="52" height="72"><rect x="1" y="1" width="50" height="70" rx="6" fill="#fbfaf5" stroke="#fbbf24" stroke-width="2"/>${heart}</svg>`;
   }
 

@@ -40,7 +40,7 @@ The layout never moves. These additions explain what's happening and reward good
 **Options pages** (a visual choice for Shawn):
 - https://sghanna.github.io/claude/hearts/options-celebrations.html: gold ribbon, heart cards (live for a clean hand), sky lanterns (live for a win)
 - https://sghanna.github.io/claude/hearts/options-moon.html: Moonrise, the old gold ribbon, or Hearts to the moon (live)
-- https://sghanna.github.io/claude/hearts/options-playable.html: which cards she can play, checked against WCAG contrast: outline plus a light dim (live, Shawn's pick), a softer dim, a deeper red, or a gold ring with no dim
+- https://sghanna.github.io/claude/hearts/options-playable.html: which cards she can play, checked against WCAG contrast. Live: Shawn's pick, option 3 (outline, light dim, and a deeper red ink #a81f1a on every card: red ranks 7.2:1 on a bright card and 5.4:1 dimmed, AAA; Solitaire's red was 5.4:1 and 4.3:1)
 
 ## Tested (Sept 23-24, 2026)
 

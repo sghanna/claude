@@ -6,7 +6,8 @@
   const YOU = 0;
   const COLS = [1, 2, 3, 0];                 // name plates left to right: Michael, Jerry, Barbara, You
   const SUIT_ORDER = ['C', 'D', 'S', 'H'];   // hand rows, alternating black / red
-  const INK = { red: '#c62f27', black: '#1b0a0a' };
+  // Deeper red than Solitaire's #c62f27, picked by Shawn after a WCAG check (Sept 24, 2026): 7.2:1 on the card, 5.4:1 dimmed.
+  const INK = { red: '#a81f1a', black: '#1b0a0a' };
   const SAVE_KEY = 'claude-hearts-game-v1', SET_KEY = 'claude-hearts-settings-v1', STATS_KEY = 'claude-hearts-stats-v1';
   const SPEEDS = { slow: { ai: 1300, pause: 3800 }, normal: { ai: 800, pause: 2400 } };
 
@@ -22,7 +23,7 @@
   // How playable cards are shown; Shawn picked 'both' (outline plus a light dim) on Sept 24, 2026.
   // WCAG-minded alternatives for the options page: 'soft' (lighter dim), 'deepred' (deeper red ink), 'ring' (no dim).
   const PLAYABLE = ['outline', 'dim', 'both', 'soft', 'deepred', 'ring'].includes(params.get('playable')) ? params.get('playable') : 'both';
-  if (PLAYABLE === 'deepred') INK.red = '#a81f1a';   // 7.2:1 on the card instead of 5.4:1
+  if (params.get('red') === 'classic') INK.red = '#c62f27';   // options pages: show the earlier choices as they were
   if (FAST) FX.setSpeedScale(0.04);
 
   const $ = id => document.getElementById(id);
