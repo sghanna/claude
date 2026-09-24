@@ -4,33 +4,73 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="options.css">
-<title>Hearts - playable card options (Claude)</title>
+<style>
+article p { min-height: 178px; }
+.row, header { max-width: 1720px; }
+ul.wcag { list-style: none; margin: 0 0 14px; padding: 12px 14px; border: 1px solid #3a4b40; border-radius: 12px; background: #0c1712; font-size: 16px; line-height: 1.45; min-height: 150px; }
+ul.wcag li { margin: 0 0 6px; }
+.pass { color: #9be3a8; font-weight: 700; }
+.near { color: #f7cf6b; font-weight: 700; }
+.note { max-width: 860px; margin: 30px auto 0; color: #bdcbbf; font-size: 16px; line-height: 1.55; }
+</style>
+<title>Hearts - playable cards and WCAG (Claude)</title>
 </head>
 <body>
 <header>
   <div class="eyebrow">Claude Hearts: a visual choice for Shawn</div>
-  <h1>Which cards can she play?</h1>
-  <p class="intro">The same moment in all three: spades were led, and her only spade is the jack, so it's the only card she can play. The game now shows Option 2 until you pick.</p>
+  <h1>Which cards can she play? Checked against WCAG</h1>
+  <p class="intro">WCAG 2.2 sets contrast minimums. Card ranks are large text, so the bar is 3:1 for AA and 4.5:1 for AAA. Signals such as an outline need 3:1 against the colors next to them (AA). WCAG excuses controls that are turned off, but she still reads the cards she can't play yet to plan ahead, so every option here is held to the same bar. All numbers were measured from the rendered screen. Same moment in all four: spades were led, and the jack is her only spade.</p>
 </header>
 <main class="row">
   <article>
-    <div class="eyebrow">Option 1: my choice</div>
-    <h2>Outline and a light dim</h2>
-    <p>The gold outline around the playable row, plus a light dim on cards she can't play. The playable card stands out, and every rank stays readable for planning ahead.</p>
+    <div class="eyebrow">Option 1: your pick (live now)</div>
+    <h2>Outline and light dim</h2>
+    <p>Gold outline around the playable row. Cards she can't play dim to 72%. It passes AA everywhere, but red ranks on dimmed cards fall just short of AAA.</p>
+    <ul class="wcag">
+      <li>Red rank, dimmed: <span class="near">4.3:1</span> (AA, just under AAA)</li>
+      <li>Black rank, dimmed: <span class="pass">9.8:1</span> (AAA)</li>
+      <li>Red rank, full: <span class="pass">5.4:1</span> (AAA)</li>
+      <li>Gold outline vs felt: <span class="pass">5.9:1</span> (passes)</li>
+    </ul>
     <div class="phone"><iframe title="Outline and light dim" src="index.html?demo=follow&amp;playable=both"></iframe></div>
   </article>
   <article>
-    <div class="eyebrow">Option 2: without it (live now)</div>
-    <h2>Gold outline only</h2>
-    <p>How it works today: a gold outline around the row she can play from. Every card keeps full brightness, but the choice is less obvious at a glance.</p>
-    <div class="phone"><iframe title="Gold outline only" src="index.html?demo=follow&amp;playable=outline"></iframe></div>
+    <div class="eyebrow">Option 2: my recommendation</div>
+    <h2>Outline and softer dim</h2>
+    <p>The same, but dimmed to 80%. The smallest change that reaches AAA, and it keeps Solitaire's red. Dimmed cards look less different (1.6:1 instead of 2.0:1), so the outline does more of the work.</p>
+    <ul class="wcag">
+      <li>Red rank, dimmed: <span class="pass">4.7:1</span> (AAA)</li>
+      <li>Black rank, dimmed: <span class="pass">12.0:1</span> (AAA)</li>
+      <li>Red rank, full: <span class="pass">5.4:1</span> (AAA)</li>
+      <li>Gold outline vs felt: <span class="pass">5.9:1</span> (passes)</li>
+    </ul>
+    <div class="phone"><iframe title="Outline and softer dim" src="index.html?demo=follow&amp;playable=soft"></iframe></div>
   </article>
   <article>
-    <div class="eyebrow">Option 3: another way</div>
-    <h2>Strong dim, no outline</h2>
-    <p>Cards she can't play turn noticeably darker, like most card apps. The clearest signal, but those ranks lose some contrast.</p>
-    <div class="phone"><iframe title="Strong dim" src="index.html?demo=follow&amp;playable=dim"></iframe></div>
+    <div class="eyebrow">Option 3: most contrast</div>
+    <h2>Outline, light dim, deeper red</h2>
+    <p>Your pick with a deeper red ink on every card. Red ranks reach AAA even by the stricter small-text standard. The catch: red and black suits end up closer in brightness (2.6:1 instead of 3.5:1), so she tells them apart mostly by color. The red also no longer matches Solitaire.</p>
+    <ul class="wcag">
+      <li>Red rank, dimmed: <span class="pass">5.4:1</span> (AAA)</li>
+      <li>Black rank, dimmed: <span class="pass">9.8:1</span> (AAA)</li>
+      <li>Red rank, full: <span class="pass">7.2:1</span> (AAA, any text size)</li>
+      <li>Gold outline vs felt: <span class="pass">5.9:1</span> (passes)</li>
+    </ul>
+    <div class="phone"><iframe title="Outline, light dim, deeper red" src="index.html?demo=follow&amp;playable=deepred"></iframe></div>
+  </article>
+  <article>
+    <div class="eyebrow">Option 4: nothing dims</div>
+    <h2>Gold ring on each playable card</h2>
+    <p>No dimming at all. Each card she can play gets its own gold ring, and every rank keeps full contrast. The playable card is found by its ring alone, which is a weaker signal at a glance than dimming the rest.</p>
+    <ul class="wcag">
+      <li>Red rank, any card: <span class="pass">5.4:1</span> (AAA)</li>
+      <li>Black rank, any card: <span class="pass">19.0:1</span> (AAA)</li>
+      <li>Gold ring vs felt: <span class="pass">7.4:1</span> (passes)</li>
+      <li>Dimming: none</li>
+    </ul>
+    <div class="phone"><iframe title="Gold ring on each playable card" src="index.html?demo=follow&amp;playable=ring"></iframe></div>
   </article>
 </main>
+<p class="note">All four meet WCAG AA, and none of them depends on color alone: the outline or ring is a shape, and dimming changes brightness. Dimming on its own would not be enough (the dimmed card face is only 1.6-2.0:1 from a bright one), which is why every dimming option keeps the gold outline.</p>
 </body>
 </html>

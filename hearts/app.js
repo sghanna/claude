@@ -16,10 +16,13 @@
   // Options pages only: ?demo= shows a staged moment and never saves; ?celebrate= and ?playable= pick a style.
   const DEMO = params.get('demo');
   // Celebration for each moment (Shawn's picks, Sept 24, 2026). ?celebrate= overrides all three on the options pages.
-  const STYLE_FOR = { win: 'lanterns', clean: 'cards', moon: 'moon' };
+  const STYLE_FOR = { win: 'lanterns', clean: 'cards', moon: 'moonhearts' };
   const CELEBRATE = ['ribbon', 'cards', 'lanterns', 'moon', 'moonhearts'].includes(params.get('celebrate')) ? params.get('celebrate') : null;
   const styleFor = kind => CELEBRATE || STYLE_FOR[kind];
-  const PLAYABLE = ['outline', 'dim', 'both'].includes(params.get('playable')) ? params.get('playable') : 'outline';
+  // How playable cards are shown; Shawn picked 'both' (outline plus a light dim) on Sept 24, 2026.
+  // WCAG-minded alternatives for the options page: 'soft' (lighter dim), 'deepred' (deeper red ink), 'ring' (no dim).
+  const PLAYABLE = ['outline', 'dim', 'both', 'soft', 'deepred', 'ring'].includes(params.get('playable')) ? params.get('playable') : 'both';
+  if (PLAYABLE === 'deepred') INK.red = '#a81f1a';   // 7.2:1 on the card instead of 5.4:1
   if (FAST) FX.setSpeedScale(0.04);
 
   const $ = id => document.getElementById(id);
@@ -444,7 +447,9 @@
     const legal = inPlay ? new Set(H.legalPlays(st, YOU)) : null;
     const restricted = legal && st.hands[YOU].some(c => !legal.has(c));
     const choosing = st.phase === 'pass' || inPlay;
-    const outline = PLAYABLE !== 'dim', dim = PLAYABLE !== 'outline';
+    const outline = PLAYABLE !== 'dim' && PLAYABLE !== 'ring';
+    const dim = PLAYABLE !== 'outline' && PLAYABLE !== 'ring';
+    const dimClass = PLAYABLE === 'dim' ? 'unplayable' : PLAYABLE === 'soft' ? 'unplayable softer' : 'unplayable soft';
     $('hand').innerHTML = lines.map(line => {
       if (line.void) {
         return `<div class="line void" role="group">${suitIcon(line.suit, 'rgba(255,255,255,0.88)')}${T.t('none', { suits: T.suits(line.suit) })}</div>`;
@@ -457,8 +462,8 @@
         const cls = ['card'];
         if (sel) cls.push('selected');
         if (st.phase === 'received' && st.received.includes(code)) cls.push('received');
-        if (outline && restricted && !whole && legal.has(code) && !sel) cls.push('legal-one');
-        if (dim && restricted && !legal.has(code)) cls.push(PLAYABLE === 'both' ? 'unplayable soft' : 'unplayable');
+        if ((PLAYABLE === 'ring' || (outline && !whole)) && restricted && legal.has(code) && !sel) cls.push('legal-one');
+        if (dim && restricted && !legal.has(code)) cls.push(dimClass);
         const pressed = choosing ? ` aria-pressed="${sel}"` : '';
         const blocked = restricted && !legal.has(code) ? ' aria-disabled="true"' : '';
         return `<button type="button" class="${cls.join(' ')}" data-card="${code}" style="left:${r2(i * step)}px;z-index:${i + 1}"` +

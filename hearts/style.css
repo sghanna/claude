@@ -267,6 +267,7 @@ table.scores tr.best td:first-child::after { content: " \2605"; color: var(--bra
 @keyframes bump { 0% { transform: scale(1.6); } 60% { transform: scale(0.92); } 100% { transform: scale(1); } }
 .card.unplayable { filter: brightness(0.55); }
 .card.unplayable.soft { filter: brightness(0.72); }
+.card.unplayable.softer { filter: brightness(0.8); }
 .celebrate { position: fixed; inset: 0; z-index: 90; pointer-events: none; overflow: hidden; }
 .celebrate .ribbon {
   position: absolute; left: 50%; top: 33%; width: min(88vw, 370px); margin-left: calc(min(88vw, 370px) / -2);

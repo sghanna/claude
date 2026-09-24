@@ -282,7 +282,7 @@ for (const [w, h] of [[390, 844], [390, 763], [390, 740], [375, 667]]) {
 {
   const page = await newPage(390, 844, '&seed=5');
   const before = await page.evaluate(() => localStorage.getItem('claude-hearts-game-v1'));
-  for (const q of ['demo=follow&playable=both', 'demo=win&celebrate=lanterns', 'demo=clean&celebrate=cards', 'demo=moon&celebrate=moonhearts', 'demo=moon']) {
+  for (const q of ['demo=follow&playable=soft', 'demo=follow&playable=deepred', 'demo=follow&playable=ring', 'demo=win&celebrate=lanterns', 'demo=clean&celebrate=cards', 'demo=moon&celebrate=moonhearts', 'demo=moon']) {
     await page.goto(BASE + 'index.html?' + q);
     await page.waitForFunction(() => window.__hearts);
   }
