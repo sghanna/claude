@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<meta name="theme-color" content="#05130d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hearts">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+<title>Hearts</title>
+</head>
+<body>
+<div id="app" class="app">
+  <header class="topbar">
+    <button id="help-button" class="pill" type="button" aria-haspopup="dialog"><span class="pill-q" aria-hidden="true">?</span><span data-t="help">Help</span></button>
+    <h1 class="wordmark" data-t="title">Hearts</h1>
+    <button id="menu-button" class="pill" type="button" aria-haspopup="dialog">
+      <svg class="pill-icon" viewBox="0 0 20 16" aria-hidden="true" focusable="false"><path d="M2 2h16M2 8h16M2 14h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><span data-t="menu">Menu</span></button>
+  </header>
+
+  <section class="table">
+    <div id="seats" class="seats"></div>
+    <div id="stage" class="stage"></div>
+  </section>
+
+  <p id="status" class="status" role="status" aria-live="polite"></p>
+
+  <section id="hand" class="hand"></section>
+
+  <div class="actions">
+    <button id="primary-action" class="primary" type="button"></button>
+  </div>
+</div>
+
+<div id="menu-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+    <h2 id="menu-title" data-t="menu">Menu</h2>
+    <button type="button" class="dlg-btn" id="menu-last" data-t="mLast">Last trick</button>
+    <button type="button" class="dlg-btn" id="menu-scores" data-t="mScores">Scores</button>
+    <button type="button" class="dlg-btn" id="menu-help" data-t="mHelp">How to play</button>
+    <button type="button" class="dlg-btn" id="menu-settings" data-t="mSettings">Settings</button>
+    <button type="button" class="dlg-btn primary-dlg" data-close data-t="mBack">Back to the game</button>
+    <div class="dlg-divider" aria-hidden="true"></div>
+    <button type="button" class="dlg-btn danger" id="new-game" data-t="mNew">Start a new game</button>
+  </div>
+</div>
+
+<div id="new-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="new-title">
+    <h2 id="new-title" data-t="newTitle">Start a new game?</h2>
+    <p data-t="newBody"></p>
+    <button type="button" class="dlg-btn primary-dlg" data-close data-t="keep">Keep playing</button>
+    <button type="button" class="dlg-btn danger" id="confirm-new" data-t="yesNew">Yes, start over</button>
+  </div>
+</div>
+
+<div id="help-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <h2 id="help-title" data-t="mHelp">How to play</h2>
+    <ul class="rules" id="rules"></ul>
+    <button type="button" class="dlg-btn primary-dlg" data-close data-t="gotIt">Got it</button>
+  </div>
+</div>
+
+<div id="last-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="last-title">
+    <h2 id="last-title" data-t="mLast">Last trick</h2>
+    <div id="last-body"></div>
+    <button type="button" class="dlg-btn primary-dlg" data-close data-t="close">Close</button>
+  </div>
+</div>
+
+<div id="scores-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="scores-title">
+    <h2 id="scores-title" data-t="mScores">Scores</h2>
+    <div id="scores-body"></div>
+    <button type="button" class="dlg-btn primary-dlg" data-close data-t="close">Close</button>
+  </div>
+</div>
+
+<div id="settings-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <h2 id="settings-title" data-t="mSettings">Settings</h2>
+    <div id="settings-body"></div>
+    <button type="button" class="dlg-btn primary-dlg" data-close data-t="done">Done</button>
+  </div>
+</div>
+
+<div id="end-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="end-title">
+    <h2 id="end-title"></h2>
+    <div id="end-body"></div>
+    <button type="button" class="dlg-btn primary-dlg" id="end-next"></button>
+  </div>
+</div>
+
+<div class="rotate-note" aria-hidden="true"><p data-t="rotate">Please turn your phone upright to play.</p></div>
+
+<script src="glyphs.js"></script>
+<script src="rules.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
