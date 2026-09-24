@@ -151,7 +151,7 @@
         <div><span class="label">My role</span><b>Product owner and design lead</b></div>
         <div><span class="label">Builder</span><b>Claude Code</b></div>
         <div><span class="label">Platform</span><b>iPhone Home Screen web app, works offline</b></div>
-        <div><span class="label">Status</span><b>Live; her first playtest is next</b></div>
+        <div><span class="label">Status</span><b>Live; she is playtesting it</b></div>
       </div>
       <div class="links"><a href="../hearts/">Play Hearts &rarr;</a><a href="https://github.com/sghanna/claude/tree/main/hearts">Code on GitHub &rarr;</a></div>
     </div>
@@ -305,6 +305,28 @@
 
   <section>
     <div class="prose">
+      <div class="label">User observation and adjustment</div>
+      <h2>Watching her play</h2>
+      <p>Her first playtest showed how she really touches the screen. Each thing I saw became a change in the game, and these two became rules for every game Claude builds for her.</p>
+    </div>
+    <div class="calls">
+      <div class="call">
+        <div><span class="label">What I observed</span><p>She holds her finger on the screen longer than most people. Instead of choosing the card, the long press selected text on the screen.</p></div>
+        <div><span class="label">Adjustment</span><p class="mine">A long hold counts as a tap, and nothing in the game can be selected as text, dialogs included.</p></div>
+        <div><span class="label">How it was checked</span><p>Automated tests: a long hold counts once, and a quick tap right after one is not lost.</p></div>
+      </div>
+      <div class="call">
+        <div><span class="label">What I observed</span><p>Her finger drifts. Pressing "Play the 5 of hearts," she dragged up a little before lifting, and the tap didn't register.</p></div>
+        <div><span class="label">Adjustment</span><p class="mine">A press that starts on a card or button counts if it lifts on it or within about a finger's width (44 px).</p></div>
+        <div><span class="label">How it was checked</span><p>Automated tests: a small upward slide off the Play button counts once, and a long slide away does not.</p></div>
+      </div>
+    </div>
+    <div class="outcome"><span class="pill flag">Rule locked</span><span>For every game: "accessibility changes that need to be applied to every game you create."</span></div>
+    <div class="todo"><b>To add</b>Whether the change worked for her on her own phone.</div>
+  </section>
+
+  <section>
+    <div class="prose">
       <div class="label">Division of labor</div>
       <h2>What Claude did, and what I did</h2>
     </div>
@@ -343,7 +365,8 @@
       <li class="done"><span>Motion, sound, announcements, celebrations, stats</span><span>Shipped</span></li>
       <li class="done"><span>WCAG AAA red ink; playable cards outlined and dimmed</span><span>Shipped</span></li>
       <li class="done"><span>Home Screen icon</span><span>Shipped</span></li>
-      <li><span>Playtest with my mom on her phone</span><span>Up next</span></li>
+      <li class="done"><span>Long holds and drifting taps count, from her playtest</span><span>Shipped</span></li>
+      <li><span>Playtest with my mom on her phone</span><span>Under way</span></li>
     </ol>
   </section>
 
@@ -352,6 +375,7 @@
       <summary>Version history</summary>
       <div class="log">
         <table>
+          <tr><td>021c5e0</td><td>Long holds and slides count as taps; a buzz for "not allowed"; playtest options</td></tr>
           <tr><td>1a5d7b7</td><td>New Home Screen icon</td></tr>
           <tr><td>d802fe7</td><td>Six ace-and-queen icon versions with glow and border switches</td></tr>
           <tr><td>9e4a1b4</td><td>Icon options page</td></tr>
