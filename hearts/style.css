@@ -13,14 +13,19 @@
   --cw: 68px; --ch: 96px; --tw: 72px; --th: 100px; --tag-h: 30px; --line-gap: 6px;
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; height: 100%; overflow: hidden; background: #05130d; }
+/* A long press never selects text or opens a menu (Mom holds her finger down), and a double tap never zooms. */
+* {
+  box-sizing: border-box; -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation;
+}
+html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: #05130d; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: #fff;
   -webkit-text-size-adjust: 100%;
-  -webkit-user-select: none; user-select: none;
 }
+/* On the table nothing scrolls, so a finger that slides on a card or button is still a tap, not a drag (app.js). */
+.app button { touch-action: none; }
 button { font: inherit; color: inherit; }
 button:focus-visible { outline: 4px solid #7dd3fc; outline-offset: 3px; }
 
@@ -198,7 +203,6 @@ button:focus-visible { outline: 4px solid #7dd3fc; outline-offset: 3px; }
   width: min(350px, 100%); max-height: calc(100% - 40px); overflow: auto;
   background: #0f2219; border: 2px solid var(--brass); border-radius: 22px;
   padding: 22px 20px 20px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
-  -webkit-user-select: text; user-select: text;
 }
 .dialog h2 { margin: 0 0 12px; font: 700 26px/1.15 Georgia, serif; color: #fff7df; }
 .dialog p { margin: 0 0 14px; font-size: 19px; line-height: 1.4; color: #eee9d8; }
@@ -268,6 +272,20 @@ table.scores tr.best td:first-child::after { content: " \2605"; color: var(--bra
 .card.unplayable { filter: brightness(0.55); }
 .card.unplayable.soft { filter: brightness(0.72); }
 .card.unplayable.softer { filter: brightness(0.8); }
+/* Options after Mom's playtest: cards she can't play turn grey (no red left), or fade into the table. */
+.card.unplayable.grey { filter: grayscale(1) brightness(0.72); }
+.card.unplayable.ghost { filter: none; opacity: 0.42; }
+
+/* Options after Mom's playtest: the game's icon beside the title, pills without a border, bigger +points badges. */
+.wordmark { display: flex; align-items: center; gap: 8px; }
+.wordmark .logo { display: none; pointer-events: none; width: 38px; height: 38px; flex: 0 0 auto; border-radius: 9px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6); }
+.with-logo .wordmark .logo { display: block; }
+.no-pill-border .pill { border-color: transparent; }
+/* Bigger badges sit above the name (never over it), in a little extra space under the top bar. */
+.badge-big .table { margin-top: 12px; }
+.badge-big .badge { top: -24px; right: -6px; min-width: 38px; height: 30px; border-radius: 15px; font-size: 20px; line-height: 26px; padding: 0 7px; }
+.badge-bigger .table { margin-top: 18px; }
+.badge-bigger .badge { top: -28px; right: -6px; min-width: 44px; height: 34px; border-radius: 17px; font-size: 24px; line-height: 30px; padding: 0 8px; }
 .celebrate { position: fixed; inset: 0; z-index: 90; pointer-events: none; overflow: hidden; }
 .celebrate .ribbon {
   position: absolute; left: 50%; top: 33%; width: min(88vw, 370px); margin-left: calc(min(88vw, 370px) / -2);

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<style>
+.row { max-width: 1320px; }
+article p { min-height: 104px; }
+section { margin: 0 auto 56px; }
+button { font-family: inherit; font-size: 16px; font-weight: 700; }
+.head { max-width: 1280px; margin: 0 auto; }
+.head h2.part { margin: 0 0 6px; font: 600 30px/1.15 Georgia, serif; }
+.head p.lead { max-width: 860px; margin: 0; color: #d3dbd5; font-size: 17px; line-height: 1.55; }
+.actions { margin: 14px 0 0; display: flex; gap: 10px; flex-wrap: wrap; }
+.toggles { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
+.toggles .label { align-self: center; font-size: 15px; color: #bdcbbf; min-width: 58px; }
+ul.facts { list-style: none; margin: 0 0 14px; padding: 12px 14px; border: 1px solid #3a4b40; border-radius: 12px; background: #0c1712; font-size: 16px; line-height: 1.45; min-height: 96px; }
+ul.facts li { margin: 0 0 6px; }
+.pass { color: #9be3a8; font-weight: 700; }
+.near { color: #f7cf6b; font-weight: 700; }
+.done { max-width: 1280px; margin: 26px auto 48px; padding: 18px 22px; border: 2px solid #4d7a5a; border-radius: 16px; background: #10231a; font-size: 17px; line-height: 1.55; }
+.done h2 { margin: 0 0 8px; font-size: 21px; }
+.done ul { margin: 0; padding-left: 22px; max-width: 900px; }
+.done li { margin-bottom: 6px; }
+.sounds { max-width: 1280px; margin: 16px auto 0; display: flex; gap: 14px; flex-wrap: wrap; }
+.sounds > div { flex: 0 1 400px; padding: 14px 16px; border: 1px solid #3a4b40; border-radius: 14px; background: #0c1712; }
+.sounds p { margin: 6px 0 10px; color: #bdcbbf; font-size: 16px; line-height: 1.45; }
+</style>
+<title>Hearts - after her playtest (Claude)</title>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Claude Hearts: visual choices for Shawn</div>
+  <h1>After her playtest</h1>
+  <p class="intro">Four choices from what you saw while she played, plus one sound. In each row, Option 1 is my recommendation, Option 2 is what is live now, and Option 3 is another way. The phones are the real game at iPhone size; you can tap them.</p>
+</header>
+
+<div class="done">
+  <h2>Already fixed and live (no choice needed)</h2>
+  <ul>
+    <li><strong>Long taps count.</strong> Holding a finger down on a card or button no longer selects text or opens a menu, and it still counts as a tap when she lifts. Text can't be selected anywhere in the game, dialogs included.</li>
+    <li><strong>A tap that slides still counts.</strong> If her finger starts on the Play button (or any button or card) and slides up to about a finger's width before lifting, it still counts as a tap on that button.</li>
+    <li><strong>A buzz for "not allowed".</strong> Tapping a card she can't play gives two short buzzes. It works with the phone on silent. This uses an iPhone trick (iOS 18 or later), so check it on her phone; it can't be tested from a Mac.</li>
+  </ul>
+</div>
+
+<section>
+  <div class="head">
+  <h2 class="part">1. Cards she can't play</h2>
+  <p class="lead">Her moment: hearts were led, she has hearts and diamonds. Both are red, and right now the diamonds are only dimmed a little, so red sits next to red. Contrast was measured from the rendered screen (WCAG AAA for large text is 4.5:1).</p>
+  </div>
+  <div class="row">
+    <article>
+      <div class="eyebrow">Option 1: my recommendation</div>
+      <h2>Grey out the cards she can't play</h2>
+      <p>The same dimming as now, plus all color removed. The diamonds turn grey, so the only red cards left are the ones she can play. The gold outline stays.</p>
+      <ul class="facts">
+        <li>Greyed diamond rank: <span class="pass">6.8:1</span> (AAA)</li>
+        <li>Greyed black rank: <span class="pass">9.4:1</span> (AAA)</li>
+        <li>Playable red rank: <span class="pass">7.0:1</span> (AAA)</li>
+      </ul>
+      <div class="phone"><iframe title="Grey out" src="index.html?demo=mixup&amp;playable=grey"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 2: live now</div>
+      <h2>Light dim and gold outline</h2>
+      <p>Cards she can't play dim to 72%. The diamonds keep their red, which is the mix-up you saw.</p>
+      <ul class="facts">
+        <li>Dimmed diamond rank: <span class="pass">5.3:1</span> (AAA)</li>
+        <li>Dimmed black rank: <span class="pass">9.5:1</span> (AAA)</li>
+        <li>Playable red rank: <span class="pass">7.0:1</span> (AAA)</li>
+      </ul>
+      <div class="phone"><iframe title="Live now" src="index.html?demo=mixup&amp;playable=both"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 3: another way</div>
+      <h2>Fade them into the table</h2>
+      <p>Cards she can't play turn see-through, so the green table shows through them. The biggest difference at a glance, but the faded ranks are harder to read when she plans ahead.</p>
+      <ul class="facts">
+        <li>Faded diamond rank: <span class="near">3.3:1</span> (AA only)</li>
+        <li>Faded black rank: <span class="pass">4.5:1</span> (AAA, just)</li>
+        <li>Playable red rank: <span class="pass">7.0:1</span> (AAA)</li>
+      </ul>
+      <div class="phone"><iframe title="Fade" src="index.html?demo=mixup&amp;playable=ghost"></iframe></div>
+    </article>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+  <h2 class="part">2. When she taps one anyway</h2>
+  <p class="lead">Today the line above her hand turns gold and says why ("You must follow hearts."). The buzz above now comes with it on every option. Tap a diamond in any phone, or use the button to tap the 8 of diamonds in all three at once. All three use today's light dim so only this changes.</p>
+  <div class="actions"><button type="button" id="tap-all">Tap the 8 of diamonds in all three</button></div>
+  </div>
+  <div class="row">
+    <article>
+      <div class="eyebrow">Option 1: my recommendation</div>
+      <h2>The card shakes "no"</h2>
+      <p>The card she tapped shakes side to side, like a head saying no, and the gold message appears.</p>
+      <div class="phone"><iframe class="tap" title="Shake" src="index.html?demo=mixup&amp;playable=both&amp;nope=shake"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 2: live now</div>
+      <h2>Message only</h2>
+      <p>Nothing moves; only the gold message appears.</p>
+      <div class="phone"><iframe class="tap" title="Message only" src="index.html?demo=mixup&amp;playable=both"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 3: another way</div>
+      <h2>The cards she can play hop</h2>
+      <p>The card she tapped stays still; the cards she can play hop up once, to show where to look.</p>
+      <div class="phone"><iframe class="tap" title="Hop" src="index.html?demo=mixup&amp;playable=both&amp;nope=hop"></iframe></div>
+    </article>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+  <h2 class="part">3. The passed cards go into her hand</h2>
+  <p class="lead">After someone passes her 3 cards, she taps Continue. Each phone taps Continue by itself a moment after it loads.</p>
+  <div class="actions"><button type="button" id="replay">Play it again</button></div>
+  </div>
+  <div class="row">
+    <article>
+      <div class="eyebrow">Option 1: my recommendation</div>
+      <h2>They glide into her hand</h2>
+      <p>The 3 cards travel from the table down into their places in her hand, a moment apart. Each place stays empty until its card lands. About 0.9 seconds in all.</p>
+      <div class="phone"><iframe class="arrive" title="Glide" src="index.html?demo=received&amp;arrive=glide"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 2: live now</div>
+      <h2>They just disappear</h2>
+      <p>The cards vanish from the table. The new cards are already in her hand, but nothing shows her where they went.</p>
+      <div class="phone"><iframe class="arrive" title="Live now" src="index.html?demo=received"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 3: another way</div>
+      <h2>One at a time, slower</h2>
+      <p>Each card makes the trip on its own and the next one waits until it lands, so her eye can follow every card. About 2.6 seconds in all.</p>
+      <div class="phone"><iframe class="arrive" title="One at a time" src="index.html?demo=received&amp;arrive=onebyone"></iframe></div>
+    </article>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+  <h2 class="part">4. Top of the screen: points, logo, buttons</h2>
+  <p class="lead">Each phone has switches for the three things you named, so you can combine them. To make the "+3" bigger without covering the names (today's badges already cover part of "Michael" and "Jerry"), the bigger badges sit above the name plates, which moves the table down 12 to 18 pixels and makes her hand cards slightly shorter. With the logo, "Hearts" gets smaller to fit between the buttons; in Spanish and Vietnamese the word drops out and the logo stays. Taking off the border doesn't free up room for the title, since the buttons stay the same size.</p>
+  </div>
+  <div class="row" id="top-row"></div>
+</section>
+
+<section>
+  <div class="head">
+  <h2 class="part">5. The "not allowed" sound</h2>
+  <p class="lead">Sound is off in her Settings, and even when it's on, the iPhone's silent switch mutes it. That's why the buzz above matters more. If she turns sound on, this is what she'd hear when she taps a card she can't play.</p>
+  </div>
+  <div class="sounds">
+    <div><div class="eyebrow">Option 1: my recommendation</div><p>Two notes going down, like "uh-uh". Easier to hear on a phone speaker.</p><button type="button" data-sound="nope">Play it</button></div>
+    <div><div class="eyebrow">Option 2: live now</div><p>One soft, low note. Phone speakers barely play low notes.</p><button type="button" data-sound="illegal">Play it</button></div>
+  </div>
+</section>
+
+<script src="fx.js"></script>
+<script>
+// Section 2: tap the 8 of diamonds in every phone at once.
+document.getElementById('tap-all').addEventListener('click', () => {
+  document.querySelectorAll('iframe.tap').forEach(f => { try { f.contentWindow.__hearts.tap('8D'); } catch (e) { /* still loading */ } });
+});
+
+// Section 3: each phone taps Continue a moment after it loads.
+function autoContinue(f) {
+  f.addEventListener('load', () => setTimeout(() => {
+    const b = f.contentDocument && f.contentDocument.getElementById('primary-action');
+    if (b) b.click();
+  }, 1400));
+}
+document.querySelectorAll('iframe.arrive').forEach(autoContinue);
+document.getElementById('replay').addEventListener('click', () => {
+  document.querySelectorAll('iframe.arrive').forEach(f => { f.src = f.src; });
+});
+
+// Section 4: three phones with switches for the logo, the button borders and the badge size.
+const PRESETS = [
+  { eyebrow: 'Option 1: my recommendation', title: 'Logo, no borders, bigger points', text: 'Your three ideas together. The logo beside the title, Help and Menu without the gold border, and the points badge about a third bigger (20 px), sitting above each name.', logo: true, border: false, badge: 'big' },
+  { eyebrow: 'Option 2: live now', title: 'As it is today', text: 'No logo, gold borders on Help and Menu, small points badge (15 px) that covers part of the name.', logo: false, border: true, badge: 'now' },
+  { eyebrow: 'Option 3: another way', title: 'Biggest points, borders kept', text: 'The largest badge (24 px), still above each name, with the logo, and the gold borders kept on Help and Menu.', logo: true, border: true, badge: 'bigger' }
+];
+const row = document.getElementById('top-row');
+PRESETS.forEach(p => {
+  const a = document.createElement('article');
+  const seg = (label, key, opts) => `<div class="toggles"><span class="label">${label}</span>` +
+    opts.map(([v, t]) => `<button type="button" data-key="${key}" data-val="${v}" aria-pressed="${String(p[key]) === String(v)}">${t}</button>`).join('') + '</div>';
+  a.innerHTML = `<div class="eyebrow">${p.eyebrow}</div><h2>${p.title}</h2><p>${p.text}</p>` +
+    seg('Logo', 'logo', [[true, 'On'], [false, 'Off']]) +
+    seg('Borders', 'border', [[true, 'On'], [false, 'Off']]) +
+    seg('Points', 'badge', [['now', 'Today'], ['big', 'Bigger'], ['bigger', 'Biggest']]) +
+    '<div class="phone"><iframe title="Top of the screen"></iframe></div>';
+  const f = a.querySelector('iframe');
+  const load = () => {
+    f.src = 'index.html?demo=mixup' + (p.logo ? '&logo=1' : '') + (p.border ? '' : '&pillborder=0') + (p.badge === 'now' ? '' : '&badge=' + p.badge);
+  };
+  a.addEventListener('click', e => {
+    const b = e.target.closest('button[data-key]');
+    if (!b) return;
+    const v = b.dataset.val;
+    p[b.dataset.key] = v === 'true' ? true : v === 'false' ? false : v;
+    a.querySelectorAll(`button[data-key="${b.dataset.key}"]`).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    load();
+  });
+  load();
+  row.appendChild(a);
+});
+
+// Section 5: sounds.
+document.querySelectorAll('[data-sound]').forEach(b => b.addEventListener('click', () => FX.sound(b.dataset.sound)));
+</script>
+</body>
+</html>

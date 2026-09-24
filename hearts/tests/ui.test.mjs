@@ -282,7 +282,8 @@ for (const [w, h] of [[390, 844], [390, 763], [390, 740], [375, 667]]) {
 {
   const page = await newPage(390, 844, '&seed=5');
   const before = await page.evaluate(() => localStorage.getItem('claude-hearts-game-v1'));
-  for (const q of ['demo=follow&playable=soft', 'demo=follow&playable=deepred', 'demo=follow&playable=ring', 'demo=win&celebrate=lanterns', 'demo=clean&celebrate=cards', 'demo=moon&celebrate=moonhearts', 'demo=moon']) {
+  for (const q of ['demo=follow&playable=soft', 'demo=follow&playable=deepred', 'demo=follow&playable=ring', 'demo=mixup&playable=grey', 'demo=mixup&playable=ghost&logo=1&badge=bigger',
+    'demo=received&arrive=glide', 'demo=win&celebrate=lanterns', 'demo=clean&celebrate=cards', 'demo=moon&celebrate=moonhearts', 'demo=moon']) {
     await page.goto(BASE + 'index.html?' + q);
     await page.waitForFunction(() => window.__hearts);
   }
@@ -291,6 +292,98 @@ for (const [w, h] of [[390, 844], [390, 763], [390, 740], [375, 667]]) {
   ok(after === before, 'demo pages never overwrite the saved game');
   ok(page.errors.length === 0, 'demo pages: no page errors ' + page.errors.join(' | '));
   await page.close();
+}
+
+// 9. After her playtest: long holds and slides still count as taps, nothing selects, new motion and top-bar options.
+{
+  const page = await newPage(390, 844, '&seed=5');
+  const sel = () => page.evaluate(() => window.__hearts.state().sel.slice());
+  const noSelect = await page.evaluate(() => ['#status', '.dialog p', '.plate .name', '#rules'].every(q => {
+    const el = document.querySelector(q);
+    return el && getComputedStyle(el).webkitUserSelect === 'none';
+  }) && !document.dispatchEvent(new Event('selectstart', { cancelable: true })));
+  ok(noSelect, 'no text can be selected, dialogs included');
+  // A long hold that Safari does not turn into a click: our own pointerup handler taps the card once.
+  const card = (await state(page)).hands[0][4];
+  await page.evaluate(async code => {
+    const el = document.querySelector(`#hand [data-card="${code}"]`), r = el.getBoundingClientRect();
+    const at = { clientX: r.left + 20, clientY: r.top + 30, pointerId: 7, bubbles: true, pointerType: 'touch' };
+    el.dispatchEvent(new PointerEvent('pointerdown', at));
+    await new Promise(res => setTimeout(res, 700));
+    el.dispatchEvent(new PointerEvent('pointerup', at));
+  }, card);
+  ok((await sel()).join() === card, 'a long hold with no click from Safari still selects the card');
+  await page.close();
+}
+{
+  // Real mouse presses (WebKit sends its own click too): each counts exactly once.
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await page.goto(BASE + 'index.html?fast=1&seed=5');
+  await page.waitForFunction(() => window.__hearts);
+  const hand = (await state(page)).hands[0];
+  const center = async q => { const b = await page.locator(q).boundingBox(); return [b.x + b.width / 2, b.y + b.height / 2]; };
+  let [x, y] = await center(`#hand [data-card="${hand[0]}"]`);
+  await page.mouse.move(x, y); await page.mouse.down(); await page.waitForTimeout(800); await page.mouse.up();
+  ok((await state(page)).sel.join() === hand[0], 'long press on a card counts once (not twice)');
+  for (const c of hand.slice(1, 3)) await page.locator(`#hand [data-card="${c}"]`).click();
+  ok((await state(page)).sel.length === 3, 'a quick tap right after a long press is not lost');
+  // Slide far away from the Play button: not a tap.
+  [x, y] = await center('#primary-action');
+  await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x, y - 160, { steps: 6 }); await page.mouse.up();
+  ok((await state(page)).phase === 'pass', 'a long slide away from the button is not a tap');
+  // Slide up a little off the Play button before lifting: still a tap, once.
+  await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x + 6, y - 36, { steps: 4 }); await page.mouse.up();
+  await page.waitForTimeout(300);
+  const s = await state(page);
+  ok(s.phase === 'received' && s.sel.length === 0, 'tap on Play that slides up a little still counts, once (phase ' + s.phase + ')');
+  ok(errs.length === 0, 'mouse presses: no page errors ' + errs.join(' | '));
+  await ctx.close();
+}
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'no-preference' });
+  const page = await ctx.newPage();
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  // Passed cards glide into her hand; their places stay empty until they land.
+  await page.goto(BASE + 'index.html?demo=received&arrive=glide');
+  await page.waitForFunction(() => window.__hearts);
+  await page.locator('#primary-action').tap();
+  await page.waitForTimeout(150);
+  const hiddenDuring = await page.evaluate(() => [...document.querySelectorAll('#hand .card')].filter(e => getComputedStyle(e).visibility === 'hidden').length);
+  await page.waitForTimeout(1500);
+  const after = await page.evaluate(() => ({ phase: window.__hearts.state().phase, hidden: [...document.querySelectorAll('#hand .card')].filter(e => getComputedStyle(e).visibility === 'hidden').length, n: document.querySelectorAll('#hand .card').length }));
+  ok(hiddenDuring === 3 && after.phase === 'play' && after.hidden === 0 && after.n === 13, `passed cards fly into her hand (${hiddenDuring} waiting, then ${JSON.stringify(after)})`);
+  // A tap on a card she can't play: the card shakes, or the playable cards hop, and the reason shows.
+  for (const nope of ['shake', 'hop']) {
+    await page.goto(BASE + `index.html?demo=mixup&playable=grey&nope=${nope}`);
+    await page.waitForFunction(() => window.__hearts);
+    ok(await page.locator('#hand .card.unplayable.grey').count() === 6, `${nope}: the 6 cards she can't play are greyed`);
+    await page.locator('#hand [data-card="8D"]').tap({ force: true });
+    const moving = await page.evaluate(() => document.getAnimations().length);
+    ok(moving > 0 && await page.locator('#status.warn').count() === 1, `${nope}: tap on the 8 of diamonds moves something (${moving}) and explains`);
+  }
+  // Top bar: logo, bigger badges above the names, in all three languages.
+  for (const lang of ['en', 'es', 'vi']) {
+    for (const badge of ['big', 'bigger']) {
+      await page.goto(BASE + `index.html?demo=mixup&logo=1&pillborder=0&badge=${badge}&lang=${lang}`);
+      await page.waitForFunction(() => window.__hearts);
+      await page.waitForTimeout(700);   // let the badges' arrival bump finish
+      const m = await page.evaluate(() => {
+        const logo = document.querySelector('.wordmark .logo').getBoundingClientRect();
+        const help = document.getElementById('help-button').getBoundingClientRect(), menu = document.getElementById('menu-button').getBoundingClientRect();
+        const clear = [...document.querySelectorAll('.plate')].every(p => {
+          const b = p.querySelector('.badge'); if (!b) return true;
+          const name = p.querySelector('.name'), range = document.createRange(); range.selectNodeContents(name);
+          return b.getBoundingClientRect().bottom <= range.getBoundingClientRect().top + 3;   // the line box starts ~3 px above the letters
+        });
+        return { logo: logo.width > 30 && logo.left >= help.right && logo.right <= menu.left, clear, badges: document.querySelectorAll('.badge').length };
+      });
+      ok(m.logo && m.clear && m.badges === 3 && await fits(page), `top bar ${lang}/${badge}: logo between the buttons, badges above the names, everything fits ${JSON.stringify(m)}`);
+    }
+  }
+  ok(errs.length === 0, 'new options: no page errors ' + errs.join(' | '));
+  await ctx.close();
 }
 
 await browser.close();

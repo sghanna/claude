@@ -18,7 +18,7 @@ Then open http://127.0.0.1:8767/hearts/. For a phone-sized view in Chrome or Saf
 - **Full rules.** Pass 3 cards left, right, across, then a hand with no passing. The 2 of clubs leads. Follow suit. No hearts or queen of spades on the first trick unless there's no other choice. Hearts can't be led until one has been played (the queen of spades doesn't count), unless you hold only hearts. Hearts are 1 point each and the queen of spades is 13. Shooting the moon gives everyone else 26. The game ends when anyone reaches 100; low score wins, and a tie for low score is a shared win.
 - **Three computer players** (Michael, Jerry, Barbara). They play only from their own hand and cards already played. They pass the queen of spades unless they have 5+ spades to protect it, dump it on a higher spade, play just under the winning card to avoid points, lead low spades to flush out the queen, and throw away hearts and high spades when they can't follow suit. They don't try to shoot the moon on purpose.
 - **The screen from the design.** One row per suit (clubs, diamonds, spades, hearts). Each player's card appears under their name, labeled "Led", "Winning" and "Takes it". The player whose turn it is has a gold name box. The playable row gets a brass outline. A red "+3" badge shows points taken this hand. The big bottom button says what will happen ("Play the queen of clubs").
-- **Tapping.** Tap a card to choose it and tap again to put it back. Nothing is passed or played until she presses the big button. Tapping a card she can't play shows the reason ("You must follow clubs.") instead of selecting it.
+- **Tapping.** Tap a card to choose it and tap again to put it back. Nothing is passed or played until she presses the big button. Tapping a card she can't play shows the reason ("You must follow clubs.") instead of selecting it, with two short buzzes. A long hold counts as a tap, and so does a press that slides up to 44 px off a card or button before lifting. Nothing on screen can be selected as text, and a double tap never zooms.
 - **Pace.** No timers. Computer players move every 1.3 s on Slow (the default) or 0.8 s on Normal. A finished trick stays on the table for 3.8 s (or 2.4 s), and "Next trick" skips the wait.
 - **End of each hand.** A results panel shows this hand's points and the totals, and names the next pass direction. After the last hand, a game-over panel shows the winner, with "Play again".
 - **Menu.** Last trick, Scores, How to play, Settings (speed, sound, language), and Back to the game. "Start a new game" sits below a gap and asks first.
@@ -42,10 +42,23 @@ The layout never moves. These additions explain what's happening and reward good
 - https://sghanna.github.io/claude/hearts/options-moon.html: Moonrise, the old gold ribbon, or Hearts to the moon (live)
 - https://sghanna.github.io/claude/hearts/options-playable.html: which cards she can play, checked against WCAG contrast. Live: Shawn's pick, option 3 (outline, light dim, and a deeper red ink #a81f1a on every card: red ranks 7.2:1 on a bright card and 5.4:1 dimmed, AAA; Solitaire's red was 5.4:1 and 4.3:1)
 
+## After her playtest (Sept 24, 2026)
+
+Live now (behavior fixes, no visual choice):
+- **Long holds and slides count as taps.** She holds her finger down longer than most people, and it sometimes slides before lifting; Safari then selected text or dropped the tap. app.js now sends the tap itself when a press that started on a button lifts on it or within 44 px, and ignores Safari's own click if it also comes. Text selection, the long-press menu and double-tap zoom are off everywhere.
+- **A buzz for "not allowed".** Two short haptic ticks when she taps a card she can't play or a 4th card to pass. Works on silent. iPhones have no vibration API, so fx.js flips a hidden switch-style checkbox, which iOS 18+ answers with a haptic tick. Needs checking on her phone.
+
+Waiting for Shawn's pick on https://sghanna.github.io/claude/hearts/options-playtest.html (each URL option below defaults to what is live):
+- Cards she can't play (`?playable=grey` greys them out, `ghost` fades them; live is `both`). She mixed up hearts (playable) and diamonds (not), red next to red.
+- A tap on a card she can't play (`?nope=shake` or `hop`).
+- The 3 passed cards traveling into her hand on Continue (`?arrive=glide` or `onebyone`).
+- The top of the screen (`?logo=1`, `?pillborder=0`, `?badge=big` or `bigger`; bigger badges sit above the names).
+- A clearer not-allowed sound (`?nopesound=new`).
+
 ## Tested (Sept 23-24, 2026)
 
 - `node hearts/tests/rules.test.mjs 5000` (from ~/claude): 30 rule checks plus 5,000 simulated games (54,865 hands, 713,245 tricks). Every play was legal, no card was ever lost or duplicated, every hand scored 26 (or 78 when someone shot the moon), and every game ended. All passed.
-- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 61 checks, all passed, in WebKit (Safari's engine). They cover:
+- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 80 checks, all passed, in WebKit (Safari's engine). They cover:
   - 3 complete games played through real taps, with no text overflow or scrolling at any step,
   - illegal taps explained,
   - save and restore mid-hand, and a damaged save,
@@ -53,7 +66,8 @@ The layout never moves. These additions explain what's happening and reward good
   - all 3 languages, including 2 full hands each in Spanish and Vietnamese at 375 x 667,
   - 13 cards on screen with 44 px or larger targets at 390 x 844, 390 x 763, 390 x 740 and 375 x 667,
   - a full game with motion and sound on (nothing stalls, stats recorded exactly once, celebrations clean up),
-  - the options-page demos, which never touch the real saved game.
+  - the options-page demos, which never touch the real saved game,
+  - long holds and slides counted as exactly one tap, no text selection, the passed cards flying into her hand, the shake and hop, and the logo and bigger badges fitting in all 3 languages without covering names.
 - Every animation and celebration was also captured mid-motion (slowed 15x) and checked by eye, including the Reduce Motion version.
 - Offline play was checked in Chromium, because Playwright's WebKit can't reload any page while offline.
 - Screenshots of every stage of a game were checked by eye in all three languages.

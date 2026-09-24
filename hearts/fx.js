@@ -44,6 +44,63 @@
     }));
   };
 
+  // Each [card, spot] pair: the card travels from where it is into the spot, which stays empty until it lands.
+  // Used when the 3 passed cards go from the table into her hand.
+  FX.flyInto = function (pairs, opts) {
+    opts = opts || {};
+    pairs = pairs.filter(p => p[0] && p[1]);
+    if (!pairs.length || !canAnimate(pairs[0][0])) return Promise.resolve();
+    return Promise.all(pairs.map(([el, spot], i) => {
+      const a = el.getBoundingClientRect(), b = spot.getBoundingClientRect();
+      spot.style.visibility = 'hidden';
+      el.style.zIndex = 60;
+      const move = `translate(${(b.left + b.width / 2) - (a.left + a.width / 2)}px, ${(b.top + b.height / 2) - (a.top + a.height / 2)}px) scale(${b.width / a.width}, ${b.height / a.height})`;
+      return el.animate([{ transform: 'none' }, { transform: move }],
+        { duration: ms(opts.duration || 560), delay: ms((opts.stagger || 0) * i), easing: 'cubic-bezier(.45,0,.25,1)', fill: 'forwards' })
+        .finished.catch(() => {}).then(() => { spot.style.visibility = ''; el.style.visibility = 'hidden'; });
+    }));
+  };
+
+  // A tapped card she can't play shakes "no".
+  FX.shake = function (el) {
+    if (!canAnimate(el)) return;
+    el.animate([0, -8, 8, -7, 7, -4, 0].map(x => ({ transform: `translateX(${x}px)` })), { duration: ms(460), easing: 'ease-in-out' });
+  };
+
+  // The cards she can play hop up once, to show where to look.
+  FX.hop = function (els) {
+    els.forEach((el, i) => {
+      if (!canAnimate(el)) return;
+      el.animate([{ transform: 'none' }, { transform: 'translateY(-16px)', offset: 0.4 }, { transform: 'none' }],
+        { duration: ms(520), delay: ms(i * 60), easing: 'ease-out' });
+    });
+  };
+
+  /* ---------------- Buzz ---------------- */
+  // A short buzz she can feel with the phone on silent. iPhones (iOS 18 and later) give a small haptic tick when a
+  // switch-style checkbox is flipped, so flip a hidden one; Android phones have navigator.vibrate.
+  // Only works on a real phone and has to start from a tap; everywhere else it quietly does nothing.
+  function tick() {
+    const label = document.createElement('label'), input = document.createElement('input');
+    input.type = 'checkbox';
+    input.setAttribute('switch', '');
+    label.setAttribute('aria-hidden', 'true');
+    label.style.display = 'none';
+    label.appendChild(input);
+    document.head.appendChild(label);
+    label.click();
+    label.remove();
+  }
+  FX.buzz = function (times) {
+    times = times || 1;
+    try {
+      if (navigator.vibrate) { navigator.vibrate(times > 1 ? [45, 80, 45] : 45); return; }
+      if (!root.matchMedia || !root.matchMedia('(pointer: coarse)').matches) return;
+      tick();
+      for (let i = 1; i < times; i++) setTimeout(() => { try { tick(); } catch (e) { /* no buzz */ } }, i * 140);
+    } catch (e) { /* no buzz */ }
+  };
+
   /* ---------------- Sound ---------------- */
   let ctx = null;
   FX.unlock = function () {
@@ -84,6 +141,7 @@
   const SOUNDS = {
     select: () => tone(1320, 0, 0.06, 0.03),                                          // tiny tick: card chosen
     illegal: () => tone(196, 0, 0.14, 0.06, 'triangle'),                              // soft low note: not allowed
+    nope: () => { tone(392, 0, 0.16, 0.06, 'square'); tone(262, 0.17, 0.26, 0.06, 'square'); },   // clearer "uh-uh": not allowed
     play: () => { noise(0, 0.07, 0.12, 1500); tone(170, 0, 0.1, 0.05); },             // card lands on the felt
     collect: () => noise(0, 0.24, 0.06, 1800, 500),                                   // trick swept away
     points: () => { tone(392, 0, 0.18, 0.06, 'triangle'); tone(311, 0.15, 0.3, 0.06, 'triangle'); },   // you took points

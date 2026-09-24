@@ -22,8 +22,16 @@
   const styleFor = kind => CELEBRATE || STYLE_FOR[kind];
   // How playable cards are shown; Shawn picked 'both' (outline plus a light dim) on Sept 24, 2026.
   // WCAG-minded alternatives for the options page: 'soft' (lighter dim), 'deepred' (deeper red ink), 'ring' (no dim).
-  const PLAYABLE = ['outline', 'dim', 'both', 'soft', 'deepred', 'ring'].includes(params.get('playable')) ? params.get('playable') : 'both';
+  const PLAYABLE = ['outline', 'dim', 'both', 'soft', 'deepred', 'ring', 'grey', 'ghost'].includes(params.get('playable')) ? params.get('playable') : 'both';
   if (params.get('red') === 'classic') INK.red = '#c62f27';   // options pages: show the earlier choices as they were
+  // Choices on the options page after Mom's playtest (Sept 24, 2026). Each defaults to what is live now.
+  const NOPE = ['shake', 'hop'].includes(params.get('nope')) ? params.get('nope') : 'none';           // she taps a card she can't play
+  const ARRIVE = ['glide', 'onebyone'].includes(params.get('arrive')) ? params.get('arrive') : 'none';  // passed cards go into her hand
+  const NOPE_SOUND = params.get('nopesound') === 'new' ? 'nope' : 'illegal';
+  const look = document.documentElement.classList;
+  if (params.get('logo') === '1') look.add('with-logo');
+  if (params.get('pillborder') === '0') look.add('no-pill-border');
+  if (['big', 'bigger'].includes(params.get('badge'))) look.add('badge-' + params.get('badge'));
   if (FAST) FX.setSpeedScale(0.04);
 
   const $ = id => document.getElementById(id);
@@ -151,28 +159,38 @@
   }
 
   /* ---------------- Player actions ---------------- */
+  // Not allowed: a buzz she can feel even on silent, the not-allowed sound if Sound is on.
+  function refuse() { FX.buzz(2); sound(NOPE_SOUND); }
+
   function tapCard(code) {
     if (ui.busy) return;
     message = null;
+    let why = null;
     if (st.phase === 'pass') {
       const i = st.sel.indexOf(code);
       if (i >= 0) st.sel.splice(i, 1);
       else if (st.sel.length < 3) st.sel.push(code);
       else message = { key: 'limit' };
-      sound(message ? 'illegal' : 'select');
+      if (message) refuse(); else sound('select');
       save();
     } else if (st.phase === 'received') {
       message = { key: 'pressContinue' };
     } else if (st.phase === 'play' && st.turn === YOU) {
-      const why = H.illegalReason(st, YOU, code);
-      if (why) { st.sel = []; message = { key: why }; }
-      else st.sel = st.sel[0] === code ? [] : [code];
-      sound(why ? 'illegal' : 'select');
+      why = H.illegalReason(st, YOU, code);
+      if (why) { st.sel = []; message = { key: why }; refuse(); }
+      else { st.sel = st.sel[0] === code ? [] : [code]; sound('select'); }
       save();
     } else if (st.phase === 'play') {
       message = { key: 'waitFor', vars: { name: T.name(st.turn) } };
     }
     render();
+    if (why) pointToPlayable(code);
+  }
+
+  // After a tap on a card she can't play: that card shakes "no", or the cards she can play hop up.
+  function pointToPlayable(code) {
+    if (NOPE === 'shake') FX.shake($('hand').querySelector(`[data-card="${code}"]`));
+    else if (NOPE === 'hop') FX.hop(H.legalPlays(st, YOU).map(c => $('hand').querySelector(`[data-card="${c}"]`)).filter(Boolean));
   }
 
   async function primaryAction() {
@@ -192,9 +210,17 @@
         $('stage').querySelectorAll('.card.received').forEach((el, i) => FX.flyFrom(el, from, { scale: 0.4, opacity: 0.2, duration: 380, delay: i * 80 }));
         return;
       }
-      case 'received':
+      case 'received': {
+        // The 3 new cards travel from the table down into their places in her hand.
+        if (ARRIVE !== 'none') {
+          ui.busy = true;
+          const pairs = [...$('stage').querySelectorAll('.card.received')].map(el => [el, $('hand').querySelector(`[data-card="${el.dataset.card}"]`)]);
+          await FX.flyInto(pairs, ARRIVE === 'onebyone' ? { duration: 800, stagger: 900 } : { duration: 600, stagger: 140 });
+          ui.busy = false;
+        }
         H.beginPlay(st);
         return commit();
+      }
       case 'play': {
         if (st.turn !== YOU || st.sel.length !== 1) return;
         const card = st.sel[0], broken = st.heartsBroken;
@@ -302,15 +328,19 @@
 
   /* ---------------- Rendering ---------------- */
   // The title shrinks to fit between Help and Menu (longer words in Spanish and Vietnamese); hidden if it can't.
+  // With the icon showing, the words go first and the icon stays.
   function fitTitle() {
-    const bar = document.querySelector('.topbar'), title = document.querySelector('.wordmark');
+    const bar = document.querySelector('.topbar'), title = document.querySelector('.wordmark'), words = title.querySelector('span');
     const half = bar.clientWidth / 2;   // the title is centered, so it must fit beside the wider button
     const room = 2 * Math.min(half - $('help-button').offsetWidth, half - $('menu-button').offsetWidth) - 24;
     title.style.visibility = '';
+    words.style.display = '';
     let size = 27;
     title.style.fontSize = size + 'px';
     while (title.scrollWidth > room && size > 16) { size -= 1; title.style.fontSize = size + 'px'; }
-    if (title.scrollWidth > room) title.style.visibility = 'hidden';
+    if (title.scrollWidth <= room) return;
+    if (look.contains('with-logo')) words.style.display = 'none';
+    else title.style.visibility = 'hidden';
   }
 
   function render() {
@@ -341,7 +371,7 @@
 
   function cardBox(code, cls, remove) {
     if (remove) return `<button type="button" class="card ${cls}" data-remove="${code}" aria-label="${cap(T.card(code))}">${faceSVG(code, dims.tw, dims.th)}</button>`;
-    return `<div class="card ${cls}" role="img" aria-label="${cap(T.card(code))}">${faceSVG(code, dims.tw, dims.th)}</div>`;
+    return `<div class="card ${cls}" role="img" data-card="${code}" aria-label="${cap(T.card(code))}">${faceSVG(code, dims.tw, dims.th)}</div>`;
   }
 
   function renderStage() {
@@ -450,7 +480,7 @@
     const choosing = st.phase === 'pass' || inPlay;
     const outline = PLAYABLE !== 'dim' && PLAYABLE !== 'ring';
     const dim = PLAYABLE !== 'outline' && PLAYABLE !== 'ring';
-    const dimClass = PLAYABLE === 'dim' ? 'unplayable' : PLAYABLE === 'soft' ? 'unplayable softer' : 'unplayable soft';
+    const dimClass = { dim: 'unplayable', soft: 'unplayable softer', grey: 'unplayable grey', ghost: 'unplayable ghost' }[PLAYABLE] || 'unplayable soft';
     $('hand').innerHTML = lines.map(line => {
       if (line.void) {
         return `<div class="line void" role="group">${suitIcon(line.suit, 'rgba(255,255,255,0.88)')}${T.t('none', { suits: T.suits(line.suit) })}</div>`;
@@ -590,6 +620,39 @@
 
   /* ---------------- Wiring ---------------- */
   document.addEventListener('pointerdown', () => { if (settings.sound) FX.unlock(); }, true);   // phones only allow sound after a tap
+
+  // Mom holds her finger on the glass longer than most people, and her finger sometimes slides a little before
+  // it lifts. Nothing here is meant to be selected or copied, and a press that starts on a button counts as a tap
+  // if it lifts on that button or close to it (SLIDE px), however long it was held. Safari drops the click after a
+  // long hold or a slide, so send one ourselves then, and ignore Safari's own click if it comes as well.
+  const SLIDE = 44;
+  document.addEventListener('selectstart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  let press = null, sent = null;
+  document.addEventListener('pointerdown', e => {
+    sent = null;   // a new press: Safari's click for the last one, if it was coming, has already come
+    const b = e.target.closest && e.target.closest('button');
+    press = b ? { b, id: e.pointerId, at: performance.now(), x: e.clientX, y: e.clientY } : null;
+  }, true);
+  document.addEventListener('pointercancel', () => { press = null; }, true);
+  document.addEventListener('pointerup', e => {
+    const p = press;
+    press = null;
+    if (!p || e.pointerId !== p.id || p.b.disabled || !p.b.isConnected) return;
+    const moved = Math.hypot(e.clientX - p.x, e.clientY - p.y) > 8;
+    if (!moved && performance.now() - p.at < 450) return;   // an ordinary tap clicks by itself
+    const r = p.b.getBoundingClientRect();
+    const near = e.clientX > r.left - SLIDE && e.clientX < r.right + SLIDE && e.clientY > r.top - SLIDE && e.clientY < r.bottom + SLIDE;
+    if (!near) return;
+    sent = performance.now() + 500;
+    p.b.click();
+  }, true);
+  document.addEventListener('click', e => {
+    if (!e.isTrusted || !sent) return;
+    // The screen was redrawn by our click, so Safari's late click may land on the new copy of the same card.
+    if (performance.now() < sent) { e.stopPropagation(); e.preventDefault(); }
+    sent = null;
+  }, true);
   $('hand').addEventListener('click', e => { const c = e.target.closest('button.card'); if (c) tapCard(c.dataset.card); });
   $('stage').addEventListener('click', e => { const c = e.target.closest('button[data-remove]'); if (c && st.phase === 'pass') tapCard(c.dataset.remove); });
   $('primary-action').addEventListener('click', primaryAction);
@@ -633,6 +696,20 @@
   function runDemo(kind) {
     const r = H.makeRng(12);
     st = H.newGame(r);
+    if (kind === 'received') {   // the 3 passed cards are on the table, waiting for Continue
+      H.applyPasses(st, [0, 1, 2, 3].map(i => H.aiPass(st.hands[i])));
+      return render();
+    }
+    if (kind === 'mixup') {   // Mom's moment: hearts were led, she has hearts and diamonds (red and red)
+      const mine = ['9C', '4D', '8D', 'QD', 'KD', 'JS', '5H', '9H'];
+      const rest = H.fullDeck().filter(c => !mine.includes(c) && c !== '7H' && c !== 'KH');
+      Object.assign(st, {
+        hands: [mine, rest.slice(0, 8), rest.slice(8, 15), rest.slice(15, 22)], phase: 'play', trickNo: 5, heartsBroken: true,
+        leader: 2, turn: YOU, sel: [], received: [], trick: [{ seat: 2, card: '7H' }, { seat: 3, card: 'KH' }],
+        handPts: [2, 3, 13, 0], scores: [18, 30, 25, 12]
+      });
+      return render();
+    }
     H.applyPasses(st, [0, 1, 2, 3].map(i => H.aiPass(st.hands[i])));
     H.beginPlay(st);
     const step = () => { if (st.phase === 'play') H.playCard(st, st.turn, H.aiPlay(st, st.turn)); else H.collectTrick(st); };
@@ -661,7 +738,7 @@
   }
 
   // For automated tests only.
-  window.__hearts = { state: () => st, settings: () => settings, stats: () => stats, announce: h => { announce(h); renderStatus(); }, commit, rules: H, load: s => { st = s; commit(); }, hold: clearTimers, resume: schedule };
+  window.__hearts = { state: () => st, settings: () => settings, stats: () => stats, announce: h => { announce(h); renderStatus(); }, commit, rules: H, load: s => { st = s; commit(); }, hold: clearTimers, resume: schedule, tap: tapCard };
 
   /* ---------------- Start ---------------- */
   applyLanguage();
