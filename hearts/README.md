@@ -75,7 +75,7 @@ The layout never moves. These additions explain what's happening and reward good
 - `i18n.js`: all words in three languages
 - `glyphs.js`: the traced card lettering from agy-solitaire
 - `sw.js`: the offline copy
-- `manifest.json`, `icon-*.png`, `icon.svg`: Home Screen app setup
+- `manifest.json`, `icon-*.png`, `icon.svg`: Home Screen app setup. The icon is Shawn's pick from options-icon-cards.html (Sept 24): version 1, the queen of spades behind the ace of hearts, with the magenta selection glow on the ace and a brass border. `icon-options/` holds the other candidates.
 - `tests/`: the two test suites; `tests/shots/` holds screenshots at each phone size
 
 ## Publishing a change

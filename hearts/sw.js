@@ -3,7 +3,7 @@
    Every game on sghanna.github.io shares one cache store, so this only ever deletes its own old copies,
    and it refills its copy on the next online visit if another app's cleanup wiped it (agy-solitaire's does). */
 const PREFIX = 'claude-hearts-';
-const VERSION = PREFIX + 'v5';
+const VERSION = PREFIX + 'v6';
 const FILES = ['./', 'index.html', 'style.css', 'glyphs.js', 'rules.js', 'i18n.js', 'fx.js', 'app.js', 'manifest.json',
   'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
