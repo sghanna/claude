@@ -2,16 +2,16 @@
 
 A complete Hearts game for Shawn's mom's iPhone, built from Claude's "Suit Rows" design in the Sept 22-23 design bake-off (~/hearts-bakeoff/claude). It is Claude's own project, separate from Codex's files.
 
-**Live:** https://sghanna.github.io/claude-hearts/ (GitHub repo sghanna/claude-hearts, published Sept 24, 2026). Nothing is published inside mom-games.
+**Live:** https://sghanna.github.io/claude/hearts/ (repo sghanna/claude, folder `hearts/`). The `claude` repo holds Claude's games, one folder per game. mom-games is reserved for the game Shawn picks as each contest's winner, and the winning AI copies its game there.
 
 ## Try it on this Mac
 
 ```sh
-cd ~/claude-hearts
+cd ~/claude
 python3 -m http.server 8767 --bind 127.0.0.1
 ```
 
-Then open http://127.0.0.1:8767/. For a phone-sized view in Chrome or Safari, use the browser's responsive or device mode at 390 x 844.
+Then open http://127.0.0.1:8767/hearts/. For a phone-sized view in Chrome or Safari, use the browser's responsive or device mode at 390 x 844.
 
 ## What's in it
 
@@ -30,8 +30,8 @@ Then open http://127.0.0.1:8767/. For a phone-sized view in Chrome or Safari, us
 
 ## Tested (Sept 23, 2026)
 
-- `node tests/rules.test.mjs 5000`: 30 rule checks plus 5,000 simulated games (54,865 hands, 713,245 tricks). Every play was legal, no card was ever lost or duplicated, every hand scored 26 (or 78 when someone shot the moon), and every game ended. All passed.
-- `node tests/ui.test.mjs http://127.0.0.1:8767/ 3`: 67 checks, all passed, in WebKit (Safari's engine). They cover:
+- `node hearts/tests/rules.test.mjs 5000` (from ~/claude): 30 rule checks plus 5,000 simulated games (54,865 hands, 713,245 tricks). Every play was legal, no card was ever lost or duplicated, every hand scored 26 (or 78 when someone shot the moon), and every game ended. All passed.
+- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 3`: 67 checks, all passed, in WebKit (Safari's engine). They cover:
   - 3 complete games played through real taps, with no text overflow or scrolling at any step,
   - illegal taps explained,
   - save and restore mid-hand, and a damaged save,
@@ -61,9 +61,9 @@ Then open http://127.0.0.1:8767/. For a phone-sized view in Chrome or Safari, us
 
 ## Publishing a change
 
-1. Edit and test here in ~/claude-hearts.
+1. Edit and test in ~/claude/hearts.
 2. Bump `VERSION` in `sw.js` (for example `claude-hearts-v2`), or her phone keeps the old copy.
-3. Commit and push this folder (it is the sghanna/claude-hearts repo). GitHub Pages usually updates within a minute or two.
+3. Commit and push ~/claude (the sghanna/claude repo). GitHub Pages usually updates within a minute or two.
 
 **Offline copy on a shared site.** Every game on sghanna.github.io shares one offline storage area. This game only deletes its own old copies. agy-solitaire's cleanup deletes every other game's copy whenever it updates. If that happens, Hearts refills its copy the next time it's opened with a connection (tested). The one gap: if agy-solitaire updates and she then opens Hearts for the first time in airplane mode, Hearts won't load until she's back online. Changing agy-solitaire's `sw.js` to delete only caches starting with `agy-solitaire-` would close that gap.
 
