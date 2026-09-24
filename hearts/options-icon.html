@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<style>
+.row { max-width: 1320px; }
+article { width: 400px; }
+article p { min-height: 104px; }
+.big { display: block; width: 180px; height: 180px; border-radius: 40px; margin: 6px 0 16px; box-shadow: 0 10px 26px #000a; }
+.contrast { font-size: 15px; color: #bdcbbf; margin: -4px 0 12px; }
+.contrast b { color: #9be3a8; }
+.home { display: flex; gap: 22px; padding: 16px 20px; border-radius: 22px; margin: 0 0 12px; }
+.home.dark { background: linear-gradient(160deg, #1f2d4d, #0b1020); }
+.home.light { background: linear-gradient(160deg, #f3efe6, #c9d6e3); }
+.app { width: 60px; text-align: center; font: 500 12px -apple-system, BlinkMacSystemFont, sans-serif; }
+.app img { display: block; width: 60px; height: 60px; border-radius: 13.5px; margin-bottom: 5px; }
+.dark .app { color: #fff; }
+.light .app { color: #111; }
+.caption { font-size: 14px; color: #93a597; margin: 0 0 30px; }
+</style>
+<title>Hearts - icon options (Claude)</title>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Claude Hearts: a visual choice for Shawn</div>
+  <h1>Which Home Screen icon?</h1>
+  <p class="intro">Each icon is shown large, then at real Home Screen size (60 points) next to her Solitaire icon, on a dark and a light wallpaper. At that size one big, simple shape reads better than a letter, and the Hearts icon should look nothing like Solitaire's so she can find it at a glance. Contrast is the main shape against what's behind it (WCAG asks 3:1 for graphics).</p>
+</header>
+<main class="row" id="options"></main>
+<script>
+const SOLITAIRE = 'https://sghanna.github.io/mom-games/solitaire/icons/icon-180.png';
+const options = [
+  ['1-current.svg', 'Option 1: current (live now)', 'Ace of hearts card', 'The icon today: a tilted card with an A and a heart, in Solitaire\'s older red. The A is small at Home Screen size.', 'Heart on card 5.2:1, card on felt 14.3:1'],
+  ['2-current-new-red.svg', 'Option 2: current, new red', 'Ace of hearts, deeper red', 'The same design with the deeper red you picked for the cards, so the icon matches the game.', 'Heart on card <b>7.0:1</b>, card on felt 14.3:1'],
+  ['3-big-heart-card.svg', 'Option 3: another way', 'One big heart', 'A straight card with a single large heart and no letter. The biggest heart of any option, in the new red. Next to Solitaire it has the same white-card outline, so the colors do the work of telling them apart.', 'Heart on card <b>7.0:1</b>, card on felt 14.3:1'],
+  ['4-ace-and-queen.svg', 'Option 4: another way', 'Ace and queen', 'The two cards that matter most in Hearts: the ace of hearts in front of the queen of spades. Says "Hearts" to a card player, but the shapes are smaller.', 'Heart 7.0:1, queen 18.3:1, cards on felt 14.3:1'],
+  ['5-heart-medallion.svg', 'Option 5: my recommendation', 'Heart medallion', 'A large ivory heart inside a brass ring on navy. The highest contrast of all, and a completely different outline from her Solitaire icon, so she can find it at a glance. It gives up the card shape.', 'Heart on navy <b>16.5:1</b>, ring 10.3:1'],
+  ['6-heart-moon.svg', 'Option 6: another way', 'Heart on the moon', 'The moon from the "Hearts to the moon" celebration, with a red heart on its face and a few stars. The most playful, and it ties the icon to her biggest win.', 'Moon on sky 13.9:1, heart on moon 5.9:1']
+];
+document.getElementById('options').innerHTML = options.map(([file, eyebrow, title, text, contrast]) => `
+  <article>
+    <div class="eyebrow">${eyebrow}</div>
+    <h2>${title}</h2>
+    <p>${text}</p>
+    <img class="big" src="icon-options/${file}" alt="${title} icon">
+    <div class="contrast">${contrast}</div>
+    <div class="home dark"><div class="app"><img src="${SOLITAIRE}" alt="">Solitaire</div><div class="app"><img src="icon-options/${file}" alt="">Hearts</div></div>
+    <div class="home light"><div class="app"><img src="${SOLITAIRE}" alt="">Solitaire</div><div class="app"><img src="icon-options/${file}" alt="">Hearts</div></div>
+  </article>`).join('');
+</script>
+<p class="caption" style="max-width:1320px;margin:10px auto 0">Her Solitaire icon is shown for comparison only; it stays as it is.</p>
+</body>
+</html>
