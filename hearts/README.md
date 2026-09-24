@@ -34,11 +34,12 @@ The layout never moves. These additions explain what's happening and reward good
 
 - **Motion that explains.** A card glides out of the player's name box into their place on the table, and hers flies up from her hand. A finished trick gathers into the winner's name box, which glows. Passed cards travel to the receiving player, and the new ones arrive from the giver. Each movement takes about a third of a second. Phones set to Reduce Motion skip all of it.
 - **Announcements** in the gold status line: "Hearts are broken" and "Queen of spades played: 13 points". The trick result names the queen when someone takes it. A player's red "+3" points badge bumps when it grows.
-- **Celebrations sized to the moment:** a short one for a clean hand (no points), bigger ones for shooting the moon and winning. The results box waits until the celebration has finished. There are three styles; the gold ribbon is live until Shawn picks.
+- **Celebrations sized to the moment,** as Shawn picked on Sept 24: heart cards floating up for a clean hand (no points), sky lanterns for winning the game, and "Moonrise" for shooting the moon (night falls, a glowing full moon with a heart-shaped crater rises, stars come out). The results box waits until the celebration has finished. Reduce Motion shows a still version of each.
 - **Remembers her.** The game-over box shows games won, her best final score, and "New personal best!" when she beats it. These are kept on her phone only.
 
 **Options pages** (a visual choice for Shawn):
-- https://sghanna.github.io/claude/hearts/options-celebrations.html: gold ribbon (live), heart-card shower, or sky lanterns
+- https://sghanna.github.io/claude/hearts/options-celebrations.html: gold ribbon, heart cards (live for a clean hand), sky lanterns (live for a win)
+- https://sghanna.github.io/claude/hearts/options-moon.html: Moonrise (live), the old gold ribbon, or hearts flying into the moon
 - https://sghanna.github.io/claude/hearts/options-playable.html: which cards she can play, shown as outline only (live), outline plus a light dim, or a strong dim
 
 ## Tested (Sept 23-24, 2026)

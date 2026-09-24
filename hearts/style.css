@@ -278,3 +278,13 @@ table.scores tr.best td:first-child::after { content: " \2605"; color: var(--bra
 .celebrate .ribbon.big { font-size: 36px; padding: 22px 18px; }
 .celebrate .sparkle, .celebrate .floater { position: absolute; will-change: transform, opacity; }
 .celebrate .lantern svg { filter: drop-shadow(0 0 10px rgba(255, 190, 90, 0.8)); }
+.celebrate .veil { position: absolute; inset: 0; background: radial-gradient(circle at 50% 30%, rgba(30, 41, 82, 0.55) 0%, rgba(3, 7, 18, 0.86) 70%); }
+.celebrate .moon {
+  position: absolute; left: 50%; top: 30%; width: 190px; height: 190px; margin: -95px 0 0 -95px;
+  filter: drop-shadow(0 0 28px rgba(255, 240, 190, 0.85)) drop-shadow(0 0 70px rgba(255, 220, 140, 0.45));
+}
+.celebrate .ribbon.night {
+  top: 56%; background: linear-gradient(180deg, #1e2a4a 0%, #0f172a 100%); color: #fde68a; border-color: #fde68a;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 36px rgba(253, 230, 138, 0.35);
+}
+.celebrate .flyer { position: absolute; will-change: transform, opacity; }

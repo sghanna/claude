@@ -15,7 +15,10 @@
   const SEED = params.get('seed');
   // Options pages only: ?demo= shows a staged moment and never saves; ?celebrate= and ?playable= pick a style.
   const DEMO = params.get('demo');
-  const CELEBRATE = ['ribbon', 'cards', 'lanterns'].includes(params.get('celebrate')) ? params.get('celebrate') : 'ribbon';
+  // Celebration for each moment (Shawn's picks, Sept 24, 2026). ?celebrate= overrides all three on the options pages.
+  const STYLE_FOR = { win: 'lanterns', clean: 'cards', moon: 'moon' };
+  const CELEBRATE = ['ribbon', 'cards', 'lanterns', 'moon', 'moonhearts'].includes(params.get('celebrate')) ? params.get('celebrate') : null;
+  const styleFor = kind => CELEBRATE || STYLE_FOR[kind];
   const PLAYABLE = ['outline', 'dim', 'both'].includes(params.get('playable')) ? params.get('playable') : 'outline';
   if (FAST) FX.setSpeedScale(0.04);
 
@@ -114,7 +117,7 @@
       : st.moon === YOU ? 'moon' : st.moon === null && last[YOU] === 0 ? 'clean' : null;
     if (kind) {
       sound(kind === 'clean' ? 'clean' : 'big');
-      await FX.celebrate({ kind, style: CELEBRATE, text: T.t(kind === 'clean' ? 'celClean' : kind === 'moon' ? 'celMoon' : 'celWin') });
+      await FX.celebrate({ kind, style: styleFor(kind), text: T.t(kind === 'clean' ? 'celClean' : kind === 'moon' ? 'celMoon' : 'celWin') });
     } else sound('end');
     showEnd();
   }
@@ -646,7 +649,7 @@
     setTimeout(async () => {
       const k = kind === 'moon' ? 'moon' : kind === 'win' ? 'win' : 'clean';
       sound(k === 'clean' ? 'clean' : 'big');
-      await FX.celebrate({ kind: k, style: CELEBRATE, text: T.t(k === 'clean' ? 'celClean' : k === 'moon' ? 'celMoon' : 'celWin') });
+      await FX.celebrate({ kind: k, style: styleFor(k), text: T.t(k === 'clean' ? 'celClean' : k === 'moon' ? 'celMoon' : 'celWin') });
       showEnd();
     }, 400);
   }

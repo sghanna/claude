@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<title>Hearts - shooting the moon (Claude)</title>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Claude Hearts: a visual choice for Shawn</div>
+  <h1>Shooting the moon</h1>
+  <p class="intro">Taking all 13 hearts and the queen of spades is the rarest win in a hand, so it gets its own night-sky moment. Tap Replay under a phone to see it again.</p>
+</header>
+<main class="row">
+  <article>
+    <div class="eyebrow">Option 1: my choice (live now)</div>
+    <h2>Moonrise</h2>
+    <p>The table dims to night, a big glowing full moon rises slowly (look for the heart-shaped crater), stars come out, and the words appear on a night-blue banner. One large shape moving slowly, so it stays calm and easy to follow.</p>
+    <div class="moments"><button type="button" data-replay="moon">Replay</button></div>
+    <div class="phone"><iframe title="Moonrise" data-style="moon"></iframe></div>
+  </article>
+  <article>
+    <div class="eyebrow">Option 2: without it</div>
+    <h2>The gold ribbon</h2>
+    <p>What shooting the moon showed before: the same gold banner used earlier for every moment, with a few twinkling stars and no night sky.</p>
+    <div class="moments"><button type="button" data-replay="ribbon">Replay</button></div>
+    <div class="phone"><iframe title="Gold ribbon" data-style="ribbon"></iframe></div>
+  </article>
+  <article>
+    <div class="eyebrow">Option 3: another way</div>
+    <h2>Hearts to the moon</h2>
+    <p>The same night sky and moon, but the 13 hearts and the queen of spades she collected fly up into it, showing what shooting the moon means. More shapes moving at once.</p>
+    <div class="moments"><button type="button" data-replay="moonhearts">Replay</button></div>
+    <div class="phone"><iframe title="Hearts to the moon" data-style="moonhearts"></iframe></div>
+  </article>
+</main>
+<script>
+const play = style => { document.querySelector(`iframe[data-style="${style}"]`).src = `index.html?demo=moon&celebrate=${style}&t=${Date.now()}`; };
+document.querySelectorAll('[data-replay]').forEach(b => { b.onclick = () => play(b.dataset.replay); play(b.dataset.replay); });
+</script>
+</body>
+</html>

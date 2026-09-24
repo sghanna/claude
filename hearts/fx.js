@@ -98,7 +98,8 @@
   };
 
   /* ---------------- Celebrations ---------------- */
-  // kind: 'clean' (small) or 'moon' / 'win' (big). style: 'ribbon', 'cards' or 'lanterns'.
+  // kind: 'clean' (small) or 'moon' / 'win' (big).
+  // style: 'ribbon', 'cards', 'lanterns', 'moon' (moonrise) or 'moonhearts' (her hearts and the queen fly into the moon).
   // Resolves when it has finished, so the results can wait for it.
   const CHARS = ['龍', '福', '禄', '寿', '吉', '财', '旺', '春', '和'];   // same nine as agy-solitaire's lanterns
   let uid = 0;
@@ -120,40 +121,124 @@
       `<line x1="30" y1="75" x2="30" y2="88" stroke="#fbbf24" stroke-width="2"/></svg>`;
   }
 
+  // A traced glyph from glyphs.js as a small standalone SVG.
+  function glyphSVG(key, w, h, color, extra) {
+    const g = typeof GLYPHS !== 'undefined' ? GLYPHS[key] : null;
+    if (!g) return '';
+    return `<svg width="${w}" height="${h}" viewBox="${g.box.join(' ')}" ${extra || ''}><path transform="translate(0,${g.h}) scale(0.1,-0.1)" d="${g.d}" fill="${color}"/></svg>`;
+  }
+
+  // A full moon with soft craters, one of them heart-shaped.
+  function moon() {
+    const id = 'mg' + (uid++);
+    const g = typeof GLYPHS !== 'undefined' ? GLYPHS.big_H : null;
+    const heart = g ? `<svg x="52" y="112" width="40" height="40" viewBox="${g.box.join(' ')}"><path transform="translate(0,${g.h}) scale(0.1,-0.1)" d="${g.d}" fill="#c4a45a" opacity=".42"/></svg>` : '';
+    return `<svg viewBox="0 0 200 200" width="190" height="190"><defs><radialGradient id="${id}" cx="42%" cy="38%" r="65%">` +
+      `<stop offset="0" stop-color="#fffdf2"/><stop offset=".55" stop-color="#f6e7b4"/><stop offset="1" stop-color="#d8bd6e"/></radialGradient></defs>` +
+      `<circle cx="100" cy="100" r="92" fill="url(#${id})"/>` +
+      '<circle cx="72" cy="74" r="15" fill="#c9ad63" opacity=".32"/><circle cx="128" cy="60" r="9" fill="#c9ad63" opacity=".3"/>' +
+      '<circle cx="132" cy="122" r="20" fill="#c9ad63" opacity=".26"/><circle cx="154" cy="92" r="6" fill="#c9ad63" opacity=".3"/>' +
+      heart + '</svg>';
+  }
+
+  function queenCard() {
+    return '<svg viewBox="0 0 40 56" width="40" height="56"><rect x="1" y="1" width="38" height="54" rx="5" fill="#fbfaf5" stroke="#fbbf24" stroke-width="2"/>' +
+      `<svg x="5" y="4" width="20" height="24" viewBox="${typeof GLYPHS !== 'undefined' ? GLYPHS.Q.box.join(' ') : '0 0 1 1'}">` +
+      `<path transform="translate(0,${typeof GLYPHS !== 'undefined' ? GLYPHS.Q.h : 0}) scale(0.1,-0.1)" d="${typeof GLYPHS !== 'undefined' ? GLYPHS.Q.d : ''}" fill="#1b0a0a"/></svg>` +
+      `<svg x="12" y="28" width="20" height="22" viewBox="${typeof GLYPHS !== 'undefined' ? GLYPHS.big_S.box.join(' ') : '0 0 1 1'}">` +
+      `<path transform="translate(0,${typeof GLYPHS !== 'undefined' ? GLYPHS.big_S.h : 0}) scale(0.1,-0.1)" d="${typeof GLYPHS !== 'undefined' ? GLYPHS.big_S.d : ''}" fill="#1b0a0a"/></svg></svg>`;
+  }
+
   function star() {
     return '<svg viewBox="0 0 20 20" width="20" height="20"><path d="M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z" fill="#fde68a"/></svg>';
   }
 
   FX.celebrate = function (opts) {
     const big = opts.kind !== 'clean';
-    const total = ms(big ? (opts.style === 'lanterns' ? 4600 : 3800) : 2200);
+    const isMoon = opts.style === 'moon' || opts.style === 'moonhearts';
+    const total = ms(big ? (opts.style === 'lanterns' || isMoon ? 4600 : 3800) : 2200);
     const layer = document.createElement('div');
     layer.className = 'celebrate';
     layer.setAttribute('aria-hidden', 'true');
     const ribbon = document.createElement('div');
-    ribbon.className = 'ribbon' + (big ? ' big' : '');
+    ribbon.className = 'ribbon' + (big ? ' big' : '') + (isMoon ? ' night' : '');
     ribbon.textContent = opts.text.replace(/([!.]) (?=\S)/, '$1\n');   // two sentences, two lines
     layer.appendChild(ribbon);
     document.body.appendChild(layer);
     const anims = [];
     const W = root.innerWidth, Hh = root.innerHeight;
+    let veil = null, moonEl = null;
+    if (isMoon) {   // night falls over the table; the moon sits above the banner
+      veil = document.createElement('div'); veil.className = 'veil';
+      moonEl = document.createElement('div'); moonEl.className = 'moon'; moonEl.innerHTML = moon();
+      layer.insertBefore(veil, ribbon); layer.insertBefore(moonEl, ribbon);
+    }
 
     if (reduced() || typeof ribbon.animate !== 'function') {
       // Still, readable acknowledgment with no movement.
       return new Promise(res => setTimeout(() => { layer.remove(); res(); }, total));
     }
 
+    const at = isMoon ? 0.34 : 0;   // for the moon, the words arrive once it has risen
     anims.push(ribbon.animate([
       { transform: 'translateY(-24px) scale(.92)', opacity: 0 },
-      { transform: 'none', opacity: 1, offset: 0.12 },
+      { transform: 'translateY(-24px) scale(.92)', opacity: 0, offset: at },
+      { transform: 'none', opacity: 1, offset: at + 0.12 },
       { transform: 'none', opacity: 1, offset: 0.86 },
       { transform: 'translateY(-10px)', opacity: 0 }
     ], { duration: total, easing: 'ease-out', fill: 'forwards' }));
 
-    const add = (html, cls) => { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; layer.appendChild(d); return d; };
+    // Everything that moves goes behind the banner, so the words are never covered.
+    const add = (html, cls) => { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; layer.insertBefore(d, ribbon); return d; };
     const rnd = (a, b) => a + Math.random() * (b - a);
 
-    if (opts.style === 'ribbon') {
+    if (isMoon) {
+      anims.push(veil.animate([{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 1, offset: 0.86 }, { opacity: 0 }],
+        { duration: total, fill: 'forwards' }));
+      const glow = [{ transform: 'scale(1)' }, { transform: 'scale(1.05)' }, { transform: 'scale(1)' }];
+      if (opts.style === 'moon') {
+        // Moonrise: the moon climbs slowly from below, glows once, and stays.
+        anims.push(moonEl.animate([
+          { transform: `translateY(${Math.round(Hh * 0.7)}px)`, opacity: 0 },
+          { opacity: 1, offset: 0.12 },
+          { transform: 'translateY(0)', opacity: 1, offset: 0.4 },
+          { transform: 'scale(1.04)', opacity: 1, offset: 0.55 },
+          { transform: 'scale(1)', opacity: 1, offset: 0.86 },
+          { transform: 'scale(1)', opacity: 0 }
+        ], { duration: total, easing: 'ease-out', fill: 'forwards' }));
+      } else {
+        // Hearts to the moon: the 13 hearts and the queen she took fly up into it.
+        anims.push(moonEl.animate([
+          { transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: 0.15 },
+          { transform: 'scale(1)', opacity: 1, offset: 0.62 }, { transform: 'scale(1.08)', opacity: 1, offset: 0.68 },
+          { transform: 'scale(1)', opacity: 1, offset: 0.86 }, { transform: 'scale(1)', opacity: 0 }
+        ], { duration: total, fill: 'forwards' }));
+        const m = moonEl.getBoundingClientRect(), mx = m.left + m.width / 2, my = m.top + m.height / 2;
+        for (let i = 0; i < 14; i++) {
+          const queen = i === 13;
+          const el = add(queen ? queenCard() : glyphSVG('big_H', 30, 30, '#e0433a'), 'flyer');
+          const w = queen ? 40 : 30, h = queen ? 56 : 30;
+          const sx = (W / 15) * (i + 1) - w / 2 + rnd(-10, 10), sy = Hh - h - rnd(20, 140);
+          el.style.left = sx + 'px'; el.style.top = sy + 'px';
+          const dx = mx - (sx + w / 2), dy = my - (sy + h / 2);
+          anims.push(el.animate([
+            { transform: 'translate(0,0) scale(1)', opacity: 0 },
+            { transform: 'translate(0,0) scale(1)', opacity: 1, offset: 0.2 },
+            { transform: `translate(${dx}px, ${dy}px) scale(.25)`, opacity: 0.2, offset: 0.9 },
+            { transform: `translate(${dx}px, ${dy}px) scale(.2)`, opacity: 0 }
+          ], { duration: ms(2000), delay: ms(500 + i * 70), easing: 'cubic-bezier(.45,0,.25,1)', fill: 'both' }));
+        }
+      }
+      for (let i = 0; i < 18; i++) {   // stars come out
+        const s = add(star(), 'sparkle');
+        s.style.left = rnd(12, W - 32) + 'px';
+        s.style.top = rnd(Hh * 0.06, Hh * 0.52) + 'px';
+        anims.push(s.animate([
+          { transform: 'scale(0)', opacity: 0 }, { transform: 'scale(.9)', opacity: 1, offset: 0.4 },
+          { transform: 'scale(.5)', opacity: 0.7, offset: 0.7 }, { transform: 'scale(0)', opacity: 0 }
+        ], { duration: ms(rnd(1100, 1700)), delay: ms(rnd(300, total * 0.55)), iterations: 2, fill: 'both' }));
+      }
+    } else if (opts.style === 'ribbon') {
       const n = big ? 14 : 8;
       const rb = ribbon.getBoundingClientRect();
       for (let i = 0; i < n; i++) {
