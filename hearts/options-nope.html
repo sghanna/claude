@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<style>
+.row { max-width: 1320px; }
+article p { min-height: 82px; }
+button { font-family: inherit; font-size: 16px; font-weight: 700; }
+section { margin: 40px auto 56px; }
+.head { max-width: 1280px; margin: 0 auto; }
+.head h2.part { margin: 0 0 6px; font: 600 30px/1.15 Georgia, serif; }
+.head p.lead { max-width: 860px; margin: 0; color: #d3dbd5; font-size: 17px; line-height: 1.55; }
+.actions { margin: 14px 0 0; display: flex; gap: 10px; flex-wrap: wrap; }
+.sounds { max-width: 1280px; margin: 18px auto 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.sound { padding: 16px 18px; border: 1px solid #3a4b40; border-radius: 14px; background: #0c1712; display: grid; gap: 8px; align-content: start; }
+.sound.pick { border: 2px solid #ead19a; }
+.sound h3 { margin: 0; font-size: 21px; }
+.sound p { margin: 0; color: #bdcbbf; font-size: 16px; line-height: 1.45; min-height: 46px; }
+.sound button { justify-self: start; min-width: 120px; }
+.compare { max-width: 1280px; margin: 18px auto 0; color: #bdcbbf; font-size: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+</style>
+<title>Hearts - the not-allowed tap (Claude)</title>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Claude Hearts: visual and sound choices for Shawn</div>
+  <h1>When she taps a card she can't play</h1>
+  <p class="intro">Two things to choose: the sound, and how the shake and the hop you picked go together. Sound only plays if she turns Sound on in Settings and the phone isn't on silent; the two buzzes happen either way. <a href="options-playtest.html" style="color:#e5c47e">Back to the first page</a>.</p>
+</header>
+
+<section>
+  <div class="head">
+    <h2 class="part">1. The sound: six versions</h2>
+    <p class="lead">Your pick, "uh-uh", is live now; you said the tone isn't quite right. The other five change the instrument or the shape. Try them on your phone too (this page works there): phone speakers drop low notes, so some sound quieter than on a Mac.</p>
+  </div>
+  <div class="sounds">
+    <div class="sound pick"><div class="eyebrow">Option 1: your pick (live now)</div><h3>Uh-uh</h3><p>Two notes going down, with a buzzy, electronic tone.</p><button type="button" data-sound="nope">Play it</button></div>
+    <div class="sound"><div class="eyebrow">Option 2: my recommendation</div><h3>Marimba</h3><p>The same two-notes-down shape, on a warm wooden bell. Gentler, and unlike any other sound in the game.</p><button type="button" data-sound="nopeMarimba">Play it</button></div>
+    <div class="sound"><div class="eyebrow">Option 3: another way</div><h3>Nuh-nuh</h3><p>Two short notes on the same pitch, soft and round.</p><button type="button" data-sound="nopeNuh">Play it</button></div>
+    <div class="sound"><div class="eyebrow">Option 4: another way</div><h3>Knock knock</h3><p>Two soft knocks on wood. It is a little like the sound of a card landing.</p><button type="button" data-sound="nopeKnock">Play it</button></div>
+    <div class="sound"><div class="eyebrow">Option 5: another way</div><h3>Slide down</h3><p>One note that slides down, like a small "aww".</p><button type="button" data-sound="nopeSlide">Play it</button></div>
+    <div class="sound"><div class="eyebrow">Option 6: another way</div><h3>Soft buzz</h3><p>A short, muffled buzzer: the classic "wrong answer" sound, with the edge taken off.</p><button type="button" data-sound="nopeBuzz">Play it</button></div>
+  </div>
+  <div class="compare"><span>To compare with other sounds in the game:</span>
+    <button type="button" data-sound="select">Card chosen</button>
+    <button type="button" data-sound="play">Card lands</button>
+    <button type="button" data-sound="points">She takes points</button>
+    <button type="button" data-sound="illegal">Not allowed, before</button>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+    <h2 class="part">2. The shake and the hop together</h2>
+    <p class="lead">You picked both: the card she tapped shakes "no", and the cards she can play hop. Live now is my choice, one after the other. Tap a diamond in any phone, or use the button.</p>
+    <div class="actions"><button type="button" id="tap-all">Tap the 8 of diamonds in all three</button></div>
+  </div>
+  <div class="row">
+    <article>
+      <div class="eyebrow">Option 1: my choice (live now)</div>
+      <h2>In turn</h2>
+      <p>The card shakes first, then the hearts hop, so her eye goes from "not this one" to "these ones". About 1 second.</p>
+      <div class="phone"><iframe class="tap" title="In turn" src="index.html?demo=mixup&amp;nope=both"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 2: another way</div>
+      <h2>At the same time</h2>
+      <p>The shake and the hop happen together. Quicker (about 0.6 seconds), but two places move at once.</p>
+      <div class="phone"><iframe class="tap" title="Together" src="index.html?demo=mixup&amp;nope=together"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 3: another way</div>
+      <h2>In turn, hop twice</h2>
+      <p>Like Option 1, but the cards she can play hop twice, for a longer pointer. About 1.5 seconds.</p>
+      <div class="phone"><iframe class="tap" title="In turn, hop twice" src="index.html?demo=mixup&amp;nope=twice"></iframe></div>
+    </article>
+  </div>
+</section>
+
+<script src="fx.js"></script>
+<script>
+document.querySelectorAll('[data-sound]').forEach(b => b.addEventListener('click', () => FX.sound(b.dataset.sound)));
+document.getElementById('tap-all').addEventListener('click', () => {
+  document.querySelectorAll('iframe.tap').forEach(f => { try { f.contentWindow.__hearts.tap('8D'); } catch (e) { /* still loading */ } });
+});
+</script>
+</body>
+</html>

@@ -48,17 +48,17 @@ Live now (behavior fixes, no visual choice):
 - **Long holds and slides count as taps.** She holds her finger down longer than most people, and it sometimes slides before lifting; Safari then selected text or dropped the tap. app.js now sends the tap itself when a press that started on a button lifts on it or within 44 px, and ignores Safari's own click if it also comes. Text selection, the long-press menu and double-tap zoom are off everywhere.
 - **A buzz for "not allowed".** Two short haptic ticks when she taps a card she can't play or a 4th card to pass. Works on silent. iPhones have no vibration API, so fx.js flips a hidden switch-style checkbox, which iOS 18+ answers with a haptic tick. Needs checking on her phone.
 
-Waiting for Shawn's pick on https://sghanna.github.io/claude/hearts/options-playtest.html (each URL option below defaults to what is live):
-- Cards she can't play (`?playable=grey` greys them out, `ghost` fades them; live is `both`). She mixed up hearts (playable) and diamonds (not), red next to red.
-- A tap on a card she can't play (`?nope=shake` or `hop`).
-- The 3 passed cards traveling into her hand on Continue (`?arrive=glide` or `onebyone`).
-- The top of the screen (`?logo=1`, `?pillborder=0`, `?badge=big` or `bigger`; bigger badges sit above the names).
-- A clearer not-allowed sound (`?nopesound=new`).
+Shawn's picks (Sept 24, live, cache v8), from https://sghanna.github.io/claude/hearts/options-playtest.html:
+- Cards she can't play: kept the light dim and gold outline (`?playable=grey` and `ghost` show the others).
+- A tap on a card she can't play: the card shakes "no", then the cards she can play hop (`?nope=both`; also `together`, `twice`, `shake`, `hop`, `none`). Shake and hop together was a detail of his pick; "in turn" is Claude's choice, with the others on options-nope.html.
+- The 3 passed cards glide from the table into her hand on Continue (`?arrive=glide`; also `onebyone`, `none`). A window resize waits until cards in flight have landed.
+- Top of the screen: the logo beside the title, Help and Menu without the gold border, and the biggest points badge (24 px) above each name (`?logo=0`, `?pillborder=1`, `?badge=now|big` show the others).
+- The not-allowed sound: "uh-uh" (`nope`) for now. Shawn wants a different tone; six versions are on https://sghanna.github.io/claude/hearts/options-nope.html (`?nopesound=nope|nopeMarimba|nopeNuh|nopeKnock|nopeSlide|nopeBuzz`, volumes matched by measurement).
 
 ## Tested (Sept 23-24, 2026)
 
 - `node hearts/tests/rules.test.mjs 5000` (from ~/claude): 30 rule checks plus 5,000 simulated games (54,865 hands, 713,245 tricks). Every play was legal, no card was ever lost or duplicated, every hand scored 26 (or 78 when someone shot the moon), and every game ended. All passed.
-- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 80 checks, all passed, in WebKit (Safari's engine). They cover:
+- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 87 checks, all passed, in WebKit (Safari's engine). They cover:
   - 3 complete games played through real taps, with no text overflow or scrolling at any step,
   - illegal taps explained,
   - save and restore mid-hand, and a damaged save,

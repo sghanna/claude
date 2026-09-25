@@ -67,12 +67,13 @@
     el.animate([0, -8, 8, -7, 7, -4, 0].map(x => ({ transform: `translateX(${x}px)` })), { duration: ms(460), easing: 'ease-in-out' });
   };
 
-  // The cards she can play hop up once, to show where to look.
-  FX.hop = function (els) {
+  // The cards she can play hop up (once, or opts.times), to show where to look.
+  FX.hop = function (els, opts) {
+    opts = opts || {};
     els.forEach((el, i) => {
       if (!canAnimate(el)) return;
       el.animate([{ transform: 'none' }, { transform: 'translateY(-16px)', offset: 0.4 }, { transform: 'none' }],
-        { duration: ms(520), delay: ms(i * 60), easing: 'ease-out' });
+        { duration: ms(520), delay: ms((opts.delay || 0) + i * 60), iterations: opts.times || 1, easing: 'ease-out' });
     });
   };
 
@@ -138,10 +139,32 @@
     src.start(t0); src.stop(t0 + dur + 0.05);
   }
 
+  // A buzzy note with its edge taken off.
+  function muffled(freq, dur, vol) {
+    const t0 = ctx.currentTime, f = ctx.createBiquadFilter(), g = ctx.createGain();
+    f.type = 'lowpass'; f.frequency.value = 900;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+    g.gain.setValueAtTime(vol, t0 + dur - 0.06);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    [freq, freq * 1.012].forEach(hz => {   // two voices a hair apart give a soft wobble
+      const o = ctx.createOscillator();
+      o.type = 'sawtooth'; o.frequency.value = hz;
+      o.connect(f); o.start(t0); o.stop(t0 + dur + 0.05);
+    });
+    f.connect(g); g.connect(ctx.destination);
+  }
+
   const SOUNDS = {
     select: () => tone(1320, 0, 0.06, 0.03),                                          // tiny tick: card chosen
     illegal: () => tone(196, 0, 0.14, 0.06, 'triangle'),                              // soft low note: not allowed
     nope: () => { tone(392, 0, 0.16, 0.06, 'square'); tone(262, 0.17, 0.26, 0.06, 'square'); },   // clearer "uh-uh": not allowed
+    // Five more not-allowed sounds for Shawn to compare with "uh-uh" (Sept 24, 2026).
+    nopeNuh: () => { tone(440, 0, 0.1, 0.11, 'triangle'); tone(440, 0.16, 0.13, 0.11, 'triangle'); },          // two short same notes
+    nopeMarimba: () => [523, 392].forEach((f, i) => { tone(f, i * 0.17, 0.4, 0.07); tone(f * 3.9, i * 0.17, 0.07, 0.02); }),   // two wooden notes down
+    nopeKnock: () => [0, 0.15].forEach(t => { noise(t, 0.05, 0.16, 900); tone(300, t, 0.09, 0.09, 'sine', 180); }),         // two soft knocks on wood
+    nopeSlide: () => tone(494, 0, 0.34, 0.09, 'triangle', 247),                                                           // one note sliding down
+    nopeBuzz: () => muffled(233, 0.24, 0.035),                                                                               // a short, muffled buzz
     play: () => { noise(0, 0.07, 0.12, 1500); tone(170, 0, 0.1, 0.05); },             // card lands on the felt
     collect: () => noise(0, 0.24, 0.06, 1800, 500),                                   // trick swept away
     points: () => { tone(392, 0, 0.18, 0.06, 'triangle'); tone(311, 0.15, 0.3, 0.06, 'triangle'); },   // you took points

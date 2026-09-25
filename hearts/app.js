@@ -24,14 +24,17 @@
   // WCAG-minded alternatives for the options page: 'soft' (lighter dim), 'deepred' (deeper red ink), 'ring' (no dim).
   const PLAYABLE = ['outline', 'dim', 'both', 'soft', 'deepred', 'ring', 'grey', 'ghost'].includes(params.get('playable')) ? params.get('playable') : 'both';
   if (params.get('red') === 'classic') INK.red = '#c62f27';   // options pages: show the earlier choices as they were
-  // Choices on the options page after Mom's playtest (Sept 24, 2026). Each defaults to what is live now.
-  const NOPE = ['shake', 'hop'].includes(params.get('nope')) ? params.get('nope') : 'none';           // she taps a card she can't play
-  const ARRIVE = ['glide', 'onebyone'].includes(params.get('arrive')) ? params.get('arrive') : 'none';  // passed cards go into her hand
-  const NOPE_SOUND = params.get('nopesound') === 'new' ? 'nope' : 'illegal';
+  // Shawn's picks after Mom's playtest (Sept 24, 2026) are the defaults; the options pages pass the other choices.
+  // A tap on a card she can't play: it shakes "no", then the cards she can play hop ('both'). Also 'together', 'twice', 'shake', 'hop', 'none'.
+  const NOPE = ['shake', 'hop', 'none', 'together', 'twice'].includes(params.get('nope')) ? params.get('nope') : 'both';
+  const ARRIVE = ['glide', 'onebyone', 'none'].includes(params.get('arrive')) ? params.get('arrive') : 'glide';   // passed cards go into her hand
+  const NOPE_SOUNDS = ['illegal', 'nope', 'nopeNuh', 'nopeMarimba', 'nopeKnock', 'nopeSlide', 'nopeBuzz'];
+  const NOPE_SOUND = NOPE_SOUNDS.includes(params.get('nopesound')) ? params.get('nopesound') : 'nope';
+  // Top bar: logo on, no gold border on Help and Menu, biggest points badge. ?logo=0, ?pillborder=1, ?badge=now|big show the others.
   const look = document.documentElement.classList;
-  if (params.get('logo') === '1') look.add('with-logo');
-  if (params.get('pillborder') === '0') look.add('no-pill-border');
-  if (['big', 'bigger'].includes(params.get('badge'))) look.add('badge-' + params.get('badge'));
+  if (params.get('logo') === '0') look.add('no-logo');
+  if (params.get('pillborder') === '1') look.add('pill-border');
+  if (['now', 'big'].includes(params.get('badge'))) look.add('badge-' + params.get('badge'));
   if (FAST) FX.setSpeedScale(0.04);
 
   const $ = id => document.getElementById(id);
@@ -187,10 +190,14 @@
     if (why) pointToPlayable(code);
   }
 
-  // After a tap on a card she can't play: that card shakes "no", or the cards she can play hop up.
+  // After a tap on a card she can't play: that card shakes "no", then the cards she can play hop up to show where to look.
   function pointToPlayable(code) {
-    if (NOPE === 'shake') FX.shake($('hand').querySelector(`[data-card="${code}"]`));
-    else if (NOPE === 'hop') FX.hop(H.legalPlays(st, YOU).map(c => $('hand').querySelector(`[data-card="${c}"]`)).filter(Boolean));
+    const tapped = $('hand').querySelector(`[data-card="${code}"]`);
+    const playable = H.legalPlays(st, YOU).map(c => $('hand').querySelector(`[data-card="${c}"]`)).filter(Boolean);
+    const shake = ['shake', 'both', 'together', 'twice'].includes(NOPE), hop = NOPE !== 'shake' && NOPE !== 'none';
+    const hopAfter = NOPE === 'together' || NOPE === 'hop' ? 0 : 440;   // in turn: the hop starts as the shake ends
+    if (shake) FX.shake(tapped);
+    if (hop) FX.hop(playable, { delay: hopAfter, times: NOPE === 'twice' ? 2 : 1 });
   }
 
   async function primaryAction() {
@@ -339,7 +346,7 @@
     title.style.fontSize = size + 'px';
     while (title.scrollWidth > room && size > 16) { size -= 1; title.style.fontSize = size + 'px'; }
     if (title.scrollWidth <= room) return;
-    if (look.contains('with-logo')) words.style.display = 'none';
+    if (!look.contains('no-logo')) words.style.display = 'none';
     else title.style.visibility = 'hidden';
   }
 
@@ -686,7 +693,9 @@
   document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimers(); save(); } else schedule(); });
   window.addEventListener('pagehide', save);
   let resizeTimer = null;
-  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 80); });
+  // A redraw would cut short cards in flight (Safari's toolbar can resize the page mid-tap), so it waits for them.
+  const redraw = () => { if (ui.busy) resizeTimer = setTimeout(redraw, 150); else render(); };
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(redraw, 80); });
 
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* still playable online */ });

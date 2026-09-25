@@ -354,8 +354,21 @@ for (const [w, h] of [[390, 844], [390, 763], [390, 740], [375, 667]]) {
   await page.waitForTimeout(1500);
   const after = await page.evaluate(() => ({ phase: window.__hearts.state().phase, hidden: [...document.querySelectorAll('#hand .card')].filter(e => getComputedStyle(e).visibility === 'hidden').length, n: document.querySelectorAll('#hand .card').length }));
   ok(hiddenDuring === 3 && after.phase === 'play' && after.hidden === 0 && after.n === 13, `passed cards fly into her hand (${hiddenDuring} waiting, then ${JSON.stringify(after)})`);
+  // Shawn's picks are the defaults: passed cards glide in, and a refused tap shakes then hops.
+  await page.goto(BASE + 'index.html?demo=received');
+  await page.waitForFunction(() => window.__hearts);
+  await page.locator('#primary-action').tap();
+  await page.waitForTimeout(150);
+  ok(await page.evaluate(() => [...document.querySelectorAll('#hand .card')].filter(e => getComputedStyle(e).visibility === 'hidden').length) === 3, 'default: passed cards glide into her hand');
+  await page.goto(BASE + 'index.html?demo=mixup');
+  await page.waitForFunction(() => window.__hearts);
+  await page.locator('#hand [data-card="8D"]').tap({ force: true });
+  const kinds = await page.evaluate(() => document.getAnimations().map(a => a.effect.target.dataset.card).sort().join());
+  ok(kinds === '5H,8D,9H', 'default: the tapped card shakes and the hearts hop (' + kinds + ')');
+  const top = await page.evaluate(() => ({ logo: getComputedStyle(document.querySelector('.wordmark .logo')).display, border: getComputedStyle(document.getElementById('help-button')).borderTopColor, badge: getComputedStyle(document.querySelector('.badge')).fontSize }));
+  ok(top.logo === 'block' && top.border === 'rgba(0, 0, 0, 0)' && top.badge === '24px', 'default top bar: logo, no border, biggest badge ' + JSON.stringify(top));
   // A tap on a card she can't play: the card shakes, or the playable cards hop, and the reason shows.
-  for (const nope of ['shake', 'hop']) {
+  for (const nope of ['shake', 'hop', 'together', 'twice']) {
     await page.goto(BASE + `index.html?demo=mixup&playable=grey&nope=${nope}`);
     await page.waitForFunction(() => window.__hearts);
     ok(await page.locator('#hand .card.unplayable.grey').count() === 6, `${nope}: the 6 cards she can't play are greyed`);
