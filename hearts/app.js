@@ -35,8 +35,12 @@
   if (params.get('logo') === '0') look.add('no-logo');
   if (params.get('pillborder') === '1') look.add('pill-border');
   if (['now', 'big'].includes(params.get('badge'))) look.add('badge-' + params.get('badge'));
-  // Name your opponents: ?field=light|plain shows the other looks for the name boxes on the options page.
-  if (['light', 'plain'].includes(params.get('field'))) look.add('field-' + params.get('field'));
+  // Name boxes: light, Shawn's pick (Sept 25, 2026). ?field=dark|plain shows the others on the options page.
+  if (['dark', 'plain'].includes(params.get('field'))) look.add('field-' + params.get('field'));
+  // Help is in the top bar and in the Menu ("How to play"). Options page: ?help=0 hides the top-bar button, ?howto=0 the Menu item.
+  if (params.get('help') === '0') look.add('no-help');
+  if (params.get('howto') === '0') look.add('no-howto');
+  if (['pale', 'magenta'].includes(params.get('focus'))) look.add('focus-' + params.get('focus'));   // the box she is typing in
   if (FAST) FX.setSpeedScale(0.04);
 
   const $ = id => document.getElementById(id);
@@ -349,7 +353,8 @@
   function fitTitle() {
     const bar = document.querySelector('.topbar'), title = document.querySelector('.wordmark'), words = title.querySelector('span');
     const half = bar.clientWidth / 2;   // the title is centered, so it must fit beside the wider button
-    const room = 2 * Math.min(half - $('help-button').offsetWidth, half - $('menu-button').offsetWidth) - 24;
+    const helpW = look.contains('no-help') ? 0 : $('help-button').offsetWidth;
+    const room = 2 * Math.min(half - helpW, half - $('menu-button').offsetWidth) - 24;
     title.style.visibility = '';
     words.style.display = '';
     let size = 27;
@@ -822,6 +827,9 @@
     if (show === 'menu') openDialog('menu-dialog');
     else if (show === 'promise') showNames(false);
     else if (show === 'names' || show === 'thanks') { settings.promised = true; showNames(show === 'thanks'); }
+    const typing = $('names-body').querySelector(`input[data-seat="${params.get('typing')}"]`);
+    if (typing) typing.classList.add('typing');   // shows the box she is typing in, without a keyboard
+    if (show && document.activeElement) document.activeElement.blur();   // no keyboard focus ring on the samples
     return;
   }
   const couldNotRestore = load();

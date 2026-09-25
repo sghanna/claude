@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<style>
+.row { max-width: 1320px; }
+article p { min-height: 128px; }
+.pair { display: grid; gap: 14px; }
+.small { font-size: 14px; font-weight: 700; letter-spacing: 1px; color: #e5c47e; text-transform: uppercase; margin: 4px 0 -6px; }
+</style>
+<title>Hearts - Help, once or twice (Claude)</title>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Claude Hearts: visual choices for Shawn</div>
+  <h1>Help, once or twice</h1>
+  <p class="intro">Right now the rules are in two places: the Help button at the top left, and "How to play" in the Menu. Both open the same box. Help is there as a one-tap shortcut, the same as the Help button in the top bar of her Solitaire. "How to play" was added to the Menu so everything is also in one list. Each option shows the game and the Menu.</p>
+</header>
+<div class="row">
+  <article>
+    <div class="eyebrow">Option 1: my recommendation</div>
+    <h2>Keep Help, drop "How to play" from the Menu</h2>
+    <p>The reason: her Solitaire has Help in the same top-bar spot, so it is the button she already knows to look for. The Menu gets one button shorter, which helps now that "Name your opponents" made it longer.</p>
+    <div class="pair">
+      <div class="small">The game</div>
+      <div class="phone"><iframe title="Keep Help: game" src="index.html?demo=follow&amp;howto=0"></iframe></div>
+      <div class="small">The Menu</div>
+      <div class="phone"><iframe title="Keep Help: menu" src="index.html?demo=follow&amp;howto=0&amp;show=menu"></iframe></div>
+    </div>
+  </article>
+  <article>
+    <div class="eyebrow">Option 2: live now</div>
+    <h2>Both</h2>
+    <p>Help at the top left and "How to play" in the Menu. Nothing moves for her, but the same thing is in two places.</p>
+    <div class="pair">
+      <div class="small">The game</div>
+      <div class="phone"><iframe title="Both: game" src="index.html?demo=follow"></iframe></div>
+      <div class="small">The Menu</div>
+      <div class="phone"><iframe title="Both: menu" src="index.html?demo=follow&amp;show=menu"></iframe></div>
+    </div>
+  </article>
+  <article>
+    <div class="eyebrow">Option 3: your idea</div>
+    <h2>Drop Help from the top bar</h2>
+    <p>The top bar has just the title and Menu, and it is calmer. The title stays in the middle, where it is now. The cost: the rules are two taps away (Menu, then How to play), and this top bar no longer matches her Solitaire's.</p>
+    <div class="pair">
+      <div class="small">The game</div>
+      <div class="phone"><iframe title="No Help button: game" src="index.html?demo=follow&amp;help=0"></iframe></div>
+      <div class="small">The Menu</div>
+      <div class="phone"><iframe title="No Help button: menu" src="index.html?demo=follow&amp;help=0&amp;show=menu"></iframe></div>
+    </div>
+  </article>
+</div>
+</body>
+</html>

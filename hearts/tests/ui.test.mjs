@@ -423,6 +423,7 @@ const namesFit = page => page.evaluate(() => [...document.querySelectorAll('.pla
   ok((await settings()).promised === true && (await page.locator('#names-body .moon').textContent()).includes('Thank you'), 'names: the promise turns it on, with a thank-you');
   ok(await page.$$eval('#names-body input', els => els.map(e => e.value).join()) === 'Michael,Jerry,Barbara', 'names: the fields start with the current names');
   ok(await page.$eval('#names-body input', el => getComputedStyle(el).webkitUserSelect) === 'text', 'names: the fields take typing');
+  ok(await page.$eval('#names-body input', el => getComputedStyle(el).backgroundColor) === 'rgb(255, 253, 245)', 'names: light boxes (Shawn\'s pick)');
   await page.locator('#names-body input[data-seat="1"]').fill('Grandma Jo');
   await page.locator('#names-body input[data-seat="1"]').press('Enter');
   ok(await page.evaluate(() => document.activeElement.dataset.seat) === '2' && await page.locator('#names-dialog').isVisible(), 'names: Next on the keyboard goes to the next name');
@@ -485,13 +486,29 @@ for (const lang of ['en', 'es', 'vi']) {
   // The options-page views of the names box never save anything.
   const page = await newPage(390, 844, '&seed=5');
   const before = await page.evaluate(() => [localStorage.getItem('claude-hearts-settings-v1'), localStorage.getItem('claude-hearts-game-v1')].join('|'));
-  for (const q of ['demo=follow&show=menu', 'demo=follow&show=promise', 'demo=follow&show=thanks', 'demo=pass&names=Grandma%20Josephine,Aunt%20Rosemary,Riley', 'demo=follow&show=names&field=light', 'demo=follow&show=names&field=plain']) {
+  for (const q of ['demo=follow&show=menu', 'demo=follow&show=promise', 'demo=follow&show=thanks', 'demo=pass&names=Grandma%20Josephine,Aunt%20Rosemary,Riley', 'demo=follow&help=0', 'demo=follow&show=menu&howto=0', 'demo=follow&show=names&typing=2&focus=magenta', 'demo=follow&show=names&field=plain', 'demo=follow&show=names&field=dark']) {
     await page.goto(BASE + 'index.html?' + q);
     await page.waitForFunction(() => window.__hearts);
   }
   await page.locator('#names-form button[type="submit"]').tap();
   const after = await page.evaluate(() => [localStorage.getItem('claude-hearts-settings-v1'), localStorage.getItem('claude-hearts-game-v1')].join('|'));
   ok(after === before && page.errors.length === 0, 'names demos never save anything ' + page.errors.join(' | '));
+  await page.close();
+}
+
+// 11. Options for the duplicate Help: no Help button in the top bar, or no "How to play" in the Menu.
+for (const lang of ['en', 'es', 'vi']) {
+  const page = await newPage(375, 667, `&demo=follow&help=0&lang=${lang}`);
+  const m = await page.evaluate(() => {
+    const t = document.querySelector('.wordmark').getBoundingClientRect(), menu = document.getElementById('menu-button').getBoundingClientRect();
+    const over = el => el.scrollWidth > el.clientWidth + 1;
+    return { help: getComputedStyle(document.getElementById('help-button')).visibility, clear: t.left >= 0 && t.right <= menu.left,
+      fits: !over(document.getElementById('status')) && !over(document.getElementById('primary-action')) && document.documentElement.scrollWidth <= innerWidth };
+  });
+  ok(m.help === 'hidden' && m.clear && m.fits, `no Help (${lang}): title clear of Menu, everything fits ${JSON.stringify(m)}`);
+  await page.goto(BASE + `index.html?demo=follow&show=menu&howto=0&lang=${lang}`);
+  await page.waitForFunction(() => window.__hearts);
+  ok(await page.locator('#menu-help').isHidden() && await page.locator('#menu-names').isVisible() && page.errors.length === 0, `no How to play in the Menu (${lang})`);
   await page.close();
 }
 
