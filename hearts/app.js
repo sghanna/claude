@@ -25,11 +25,11 @@
   const PLAYABLE = ['outline', 'dim', 'both', 'soft', 'deepred', 'ring', 'grey', 'ghost'].includes(params.get('playable')) ? params.get('playable') : 'both';
   if (params.get('red') === 'classic') INK.red = '#c62f27';   // options pages: show the earlier choices as they were
   // Shawn's picks after Mom's playtest (Sept 24, 2026) are the defaults; the options pages pass the other choices.
-  // A tap on a card she can't play: it shakes "no", then the cards she can play hop ('both'). Also 'together', 'twice', 'shake', 'hop', 'none'.
-  const NOPE = ['shake', 'hop', 'none', 'together', 'twice'].includes(params.get('nope')) ? params.get('nope') : 'both';
+  // A tap on a card she can't play: it shakes "no", then the cards she can play hop twice ('twice'). Also 'both' (hop once), 'together', 'shake', 'hop', 'none'.
+  const NOPE = ['shake', 'hop', 'none', 'together', 'both'].includes(params.get('nope')) ? params.get('nope') : 'twice';
   const ARRIVE = ['glide', 'onebyone', 'none'].includes(params.get('arrive')) ? params.get('arrive') : 'glide';   // passed cards go into her hand
   const NOPE_SOUNDS = ['illegal', 'nope', 'nopeNuh', 'nopeMarimba', 'nopeKnock', 'nopeSlide', 'nopeBuzz'];
-  const NOPE_SOUND = NOPE_SOUNDS.includes(params.get('nopesound')) ? params.get('nopesound') : 'nope';
+  const NOPE_SOUND = NOPE_SOUNDS.includes(params.get('nopesound')) ? params.get('nopesound') : 'nopeMarimba';   // Shawn's pick of six
   // Top bar: logo on, no gold border on Help and Menu, biggest points badge. ?logo=0, ?pillborder=1, ?badge=now|big show the others.
   const look = document.documentElement.classList;
   if (params.get('logo') === '0') look.add('no-logo');
