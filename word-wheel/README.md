@@ -56,7 +56,7 @@ Details: `tools/WORDS.md`.
 
 ## Visual choices (for Shawn)
 
-- https://sghanna.github.io/claude/word-wheel/options-look.html: three looks (felt, live now; light; scenery) with measured contrast. `?look=light` or `?look=scenery` previews one; ship a pick by changing `DEFAULT_LOOK` in app.js.
+- https://sghanna.github.io/claude/word-wheel/options-look.html: three looks with measured contrast. Shawn picked felt (Sept 25, live now). `?look=light` or `?look=scenery` previews one; ship a pick by changing `DEFAULT_LOOK` in app.js.
 - https://sghanna.github.io/claude/word-wheel/options-icon.html: three icons at Home Screen size next to Solitaire and Hearts. Shawn picked the six-letter wheel (Sept 25).
 - https://sghanna.github.io/claude/word-wheel/options-icon-word.html: that wheel with the swipe path spelling out the word. Live now: W-O-R-D.
 
