@@ -486,13 +486,24 @@ for (const lang of ['en', 'es', 'vi']) {
   // The options-page views of the names box never save anything.
   const page = await newPage(390, 844, '&seed=5');
   const before = await page.evaluate(() => [localStorage.getItem('claude-hearts-settings-v1'), localStorage.getItem('claude-hearts-game-v1')].join('|'));
-  for (const q of ['demo=follow&show=menu', 'demo=follow&show=promise', 'demo=follow&show=thanks', 'demo=pass&names=Grandma%20Josephine,Aunt%20Rosemary,Riley', 'demo=follow&help=0', 'demo=follow&show=menu&howto=0', 'demo=follow&show=names&typing=2&focus=magenta', 'demo=follow&show=names&field=plain', 'demo=follow&show=names&field=dark']) {
+  for (const q of ['demo=follow&show=menu', 'demo=follow&show=promise', 'demo=follow&show=thanks', 'demo=pass&names=Grandma%20Josephine,Aunt%20Rosemary,Riley', 'demo=follow&help=0', 'demo=follow&show=menu&howto=0', 'demo=follow&show=names&typing=2&focus=magenta', 'demo=follow&show=names&typing=2&field=swap&focus=edge', 'demo=follow&show=names&field=plain', 'demo=follow&show=names&field=dark']) {
     await page.goto(BASE + 'index.html?' + q);
     await page.waitForFunction(() => window.__hearts);
   }
   await page.locator('#names-form button[type="submit"]').tap();
   const after = await page.evaluate(() => [localStorage.getItem('claude-hearts-settings-v1'), localStorage.getItem('claude-hearts-game-v1')].join('|'));
   ok(after === before && page.errors.length === 0, 'names demos never save anything ' + page.errors.join(' | '));
+  await page.close();
+}
+
+{
+  // Shawn's idea: dark boxes, and the one being typed in turns light.
+  const page = await newPage(390, 844, '&demo=follow&show=names&field=swap');
+  const colors = () => page.$$eval('#names-body input', els => els.map(e => getComputedStyle(e).backgroundColor).join(' | '));
+  const idle = await colors();
+  await page.locator('#names-body input[data-seat="1"]').tap();
+  const typing = await colors();
+  ok(idle === 'rgb(15, 23, 42) | rgb(15, 23, 42) | rgb(15, 23, 42)' && typing === 'rgb(255, 253, 245) | rgb(15, 23, 42) | rgb(15, 23, 42)', `dark boxes, the one tapped turns light (${idle} / ${typing})`);
   await page.close();
 }
 

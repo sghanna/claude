@@ -317,6 +317,12 @@ input { -webkit-user-select: text; user-select: text; -webkit-touch-callout: def
 /* Options page only: the other looks. Light boxes are Shawn's pick (Sept 25, 2026); dark was Claude's first choice. */
 .field-dark .name-field input { background: var(--navy-solid); color: #fff; }
 .field-dark .name-field input::placeholder { color: rgba(255, 255, 255, 0.55); }
+/* Shawn's idea: dark like the buttons, and only the box she is typing in turns light. focus-edge: no ring, just the gold edge. */
+.field-swap .name-field input { background: var(--navy-solid); color: #fff; }
+.field-swap .name-field input::placeholder { color: rgba(255, 255, 255, 0.55); }
+.field-swap .name-field input:focus, .field-swap .name-field input.typing { background: #fffdf5; color: var(--navy-solid); }
+.field-swap .name-field input:focus::placeholder, .field-swap .name-field input.typing::placeholder { color: rgba(15, 23, 42, 0.5); }
+.focus-edge .name-field input:focus, .focus-edge .name-field input.typing { border-color: var(--brass); box-shadow: none; }
 .no-help #help-button { visibility: hidden; }   /* keeps its place, so the title stays centered */
 .no-howto #menu-help { display: none; }
 .field-plain .name-field input {
