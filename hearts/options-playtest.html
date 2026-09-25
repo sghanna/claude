@@ -199,7 +199,7 @@ PRESETS.forEach(p => {
     '<div class="phone"><iframe title="Top of the screen"></iframe></div>';
   const f = a.querySelector('iframe');
   const load = () => {
-    f.src = `index.html?demo=mixup&logo=${p.logo ? 1 : 0}&pillborder=${p.border ? 1 : 0}&badge=${p.badge}`;
+    f.src = `index.html?demo=mixup&help=1&logo=${p.logo ? 1 : 0}&pillborder=${p.border ? 1 : 0}&badge=${p.badge}`;
   };
   a.addEventListener('click', e => {
     const b = e.target.closest('button[data-key]');

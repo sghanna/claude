@@ -24,9 +24,10 @@ const state = page => page.evaluate(() => window.__hearts.state());
 const fits = page => page.evaluate(() => {
   const over = el => el.scrollWidth > el.clientWidth + 1;
   const box = el => el.getBoundingClientRect();
-  const title = document.querySelector('.wordmark'), help = box(document.getElementById('help-button')), menu = box(document.getElementById('menu-button'));
-  const titleOk = getComputedStyle(title).visibility === 'hidden' || (box(title).left >= help.right && box(title).right <= menu.left);
-  const pillsOneLine = help.height < 50 && menu.height < 50;
+  // The top bar: logo and title on the left, clear of Menu (Shawn removed Help, Sept 25, 2026).
+  const title = document.querySelector('.wordmark'), menu = box(document.getElementById('menu-button'));
+  const titleOk = getComputedStyle(title).visibility === 'hidden' || (box(title).left >= 0 && box(title).right <= menu.left);
+  const pillsOneLine = menu.height < 50;
   return titleOk && pillsOneLine && !over(document.getElementById('status')) && !over(document.getElementById('primary-action')) &&
     document.documentElement.scrollHeight <= innerHeight && document.documentElement.scrollWidth <= innerWidth;
 });
@@ -133,9 +134,9 @@ for (let g = 0; g < GAMES; g++) {
   ok(await page.locator('#new-dialog').isHidden(), 'keep playing closes the question');
   await page.locator('#menu-button').tap();
   await page.locator('#menu-settings').tap();
-  for (const [lang, word] of [['es', 'Ayuda'], ['vi', 'Trợ giúp'], ['en', 'Help']]) {
+  for (const [lang, word] of [['es', 'Empezar'], ['vi', 'Bắt đầu'], ['en', 'Start a new']]) {
     await page.locator(`[data-set="lang"][data-val="${lang}"]`).tap();
-    ok((await page.locator('#help-button').textContent()).includes(word), `language ${lang} applies`);
+    ok((await page.locator('#new-game').textContent()).includes(word), `language ${lang} applies`);
     ok(await fits(page), `language ${lang}: text fits`);
   }
   await page.locator('[data-set="speed"][data-val="normal"]').tap();
@@ -365,7 +366,7 @@ for (const [w, h] of [[390, 844], [390, 763], [390, 740], [375, 667]]) {
   await page.locator('#hand [data-card="8D"]').tap({ force: true });
   const kinds = await page.evaluate(() => document.getAnimations().map(a => a.effect.target.dataset.card).sort().join());
   ok(kinds === '5H,8D,9H', 'default: the tapped card shakes and the hearts hop (' + kinds + ')');
-  const top = await page.evaluate(() => ({ logo: getComputedStyle(document.querySelector('.wordmark .logo')).display, border: getComputedStyle(document.getElementById('help-button')).borderTopColor, badge: getComputedStyle(document.querySelector('.badge')).fontSize }));
+  const top = await page.evaluate(() => ({ logo: getComputedStyle(document.querySelector('.wordmark .logo')).display, border: getComputedStyle(document.getElementById('menu-button')).borderTopColor, badge: getComputedStyle(document.querySelector('.badge')).fontSize }));
   ok(top.logo === 'block' && top.border === 'rgba(0, 0, 0, 0)' && top.badge === '24px', 'default top bar: logo, no border, biggest badge ' + JSON.stringify(top));
   // A tap on a card she can't play: the card shakes, or the playable cards hop, and the reason shows.
   for (const nope of ['shake', 'hop', 'together', 'twice']) {
@@ -384,13 +385,13 @@ for (const [w, h] of [[390, 844], [390, 763], [390, 740], [375, 667]]) {
       await page.waitForTimeout(700);   // let the badges' arrival bump finish
       const m = await page.evaluate(() => {
         const logo = document.querySelector('.wordmark .logo').getBoundingClientRect();
-        const help = document.getElementById('help-button').getBoundingClientRect(), menu = document.getElementById('menu-button').getBoundingClientRect();
+        const menu = document.getElementById('menu-button').getBoundingClientRect();
         const clear = [...document.querySelectorAll('.plate')].every(p => {
           const b = p.querySelector('.badge'); if (!b) return true;
           const name = p.querySelector('.name'), range = document.createRange(); range.selectNodeContents(name);
           return b.getBoundingClientRect().bottom <= range.getBoundingClientRect().top + 3;   // the line box starts ~3 px above the letters
         });
-        return { logo: logo.width > 30 && logo.left >= help.right && logo.right <= menu.left, clear, badges: document.querySelectorAll('.badge').length };
+        return { logo: logo.width > 30 && logo.left >= 0 && logo.right <= menu.left, clear, badges: document.querySelectorAll('.badge').length };
       });
       ok(m.logo && m.clear && m.badges === 3 && await fits(page), `top bar ${lang}/${badge}: logo between the buttons, badges above the names, everything fits ${JSON.stringify(m)}`);
     }
@@ -486,7 +487,7 @@ for (const lang of ['en', 'es', 'vi']) {
   // The options-page views of the names box never save anything.
   const page = await newPage(390, 844, '&seed=5');
   const before = await page.evaluate(() => [localStorage.getItem('claude-hearts-settings-v1'), localStorage.getItem('claude-hearts-game-v1')].join('|'));
-  for (const q of ['demo=follow&show=menu', 'demo=follow&show=promise', 'demo=follow&show=thanks', 'demo=pass&names=Grandma%20Josephine,Aunt%20Rosemary,Riley', 'demo=follow&help=0', 'demo=follow&show=menu&howto=0', 'demo=follow&show=names&typing=2&focus=magenta', 'demo=follow&show=names&typing=2&field=swap&focus=edge', 'demo=follow&show=names&field=plain', 'demo=follow&show=names&field=dark']) {
+  for (const q of ['demo=follow&show=menu', 'demo=follow&show=promise', 'demo=follow&show=thanks', 'demo=pass&names=Grandma%20Josephine,Aunt%20Rosemary,Riley', 'demo=follow&help=1', 'demo=follow&show=menu&howto=0&help=1', 'demo=follow&show=names&typing=2&focus=magenta', 'demo=follow&show=names&typing=2&field=swap&focus=edge', 'demo=follow&show=names&field=plain', 'demo=follow&show=names&field=dark']) {
     await page.goto(BASE + 'index.html?' + q);
     await page.waitForFunction(() => window.__hearts);
   }
@@ -507,16 +508,49 @@ for (const lang of ['en', 'es', 'vi']) {
   await page.close();
 }
 
-// 11. Options for the duplicate Help: no Help button in the top bar, or no "How to play" in the Menu.
+{
+  // Screen readers: each card on the table says who played it and its tag; card drawings are hidden from screen readers.
+  const page = await newPage(390, 844, '&demo=mixup');
+  const labels = await page.$$eval('#stage .card', els => els.map(e => e.getAttribute('aria-label')).join(' | '));
+  const hidden = await page.evaluate(() => [...document.querySelectorAll('svg.face')].every(s => s.getAttribute('aria-hidden') === 'true') &&
+    [...document.querySelectorAll('#stage .tag')].every(t => t.getAttribute('aria-hidden') === 'true'));
+  ok(labels === 'Jerry: 7 of hearts, Led | Barbara: king of hearts, Winning' && hidden, 'screen reader: table cards say who played them (' + labels + ')');
+  await page.close();
+}
+
+// Drawn title options: they fit beside Menu, and screen readers still get the words in her language.
+for (const key of ['abril', 'playfair', 'dmserif', 'yeseva', 'fraunces', 'alfaslab']) {
+  for (const [lang, word] of [['en', 'Hearts'], ['es', 'Corazones']]) {
+    const page = await newPage(375, 667, `&demo=follow&wordmark=${key}&lang=${lang}`);
+    const m = await page.evaluate(() => {
+      const art = document.querySelector('.wordmark-art'), menu = document.getElementById('menu-button').getBoundingClientRect();
+      const r = art.getBoundingClientRect();
+      return { h: Math.round(r.height), clear: r.left >= 0 && r.right <= menu.left, hidden: art.getAttribute('aria-hidden') === 'true' };
+    });
+    const heading = await page.getByRole('heading', { level: 1 }).textContent();
+    ok(m.h >= 19 && m.clear && m.hidden && heading.trim() === word && await fits(page), `drawn title ${key} (${lang}): fits beside Menu, screen readers hear "${heading.trim()}" ${JSON.stringify(m)}`);
+    await page.close();
+  }
+}
+
+// 11. No Help button in the top bar (Shawn, Sept 25): logo and title on the left, rules in Menu > How to play.
 for (const lang of ['en', 'es', 'vi']) {
-  const page = await newPage(375, 667, `&demo=follow&help=0&lang=${lang}`);
-  const m = await page.evaluate(() => {
-    const t = document.querySelector('.wordmark').getBoundingClientRect(), menu = document.getElementById('menu-button').getBoundingClientRect();
-    const over = el => el.scrollWidth > el.clientWidth + 1;
-    return { help: getComputedStyle(document.getElementById('help-button')).visibility, clear: t.left >= 0 && t.right <= menu.left,
-      fits: !over(document.getElementById('status')) && !over(document.getElementById('primary-action')) && document.documentElement.scrollWidth <= innerWidth };
-  });
-  ok(m.help === 'hidden' && m.clear && m.fits, `no Help (${lang}): title clear of Menu, everything fits ${JSON.stringify(m)}`);
+  for (const [w, h] of [[390, 844], [375, 667]]) {
+    const page = await newPage(w, h, `&demo=follow&lang=${lang}`);
+    const m = await page.evaluate(() => {
+      const logo = document.querySelector('.wordmark .logo').getBoundingClientRect(), t = document.querySelector('.wordmark').getBoundingClientRect(), menu = document.getElementById('menu-button').getBoundingClientRect();
+      return { help: getComputedStyle(document.getElementById('help-button')).display, left: Math.round(logo.left), words: getComputedStyle(document.querySelector('.wordmark span')).display, clear: t.right <= menu.left };
+    });
+    ok(m.help === 'none' && m.left <= 12 && m.words !== 'none' && m.clear && await fits(page), `no Help ${lang} ${w}x${h}: logo and title on the left, title in full, clear of Menu ${JSON.stringify(m)}`);
+    await page.close();
+  }
+  const page = await newPage(390, 844, `&demo=follow&lang=${lang}`);
+  await page.locator('#menu-button').tap();
+  await page.locator('#menu-help').tap();
+  ok(await page.locator('#help-dialog').isVisible() && await page.locator('#rules li').count() === 9, `rules still one Menu tap away (${lang})`);
+  await page.goto(BASE + `index.html?demo=follow&help=1&lang=${lang}`);
+  await page.waitForFunction(() => window.__hearts);
+  ok(await page.locator('#help-button').isVisible(), `?help=1 shows the old top bar for older options pages (${lang})`);
   await page.goto(BASE + `index.html?demo=follow&show=menu&howto=0&lang=${lang}`);
   await page.waitForFunction(() => window.__hearts);
   ok(await page.locator('#menu-help').isHidden() && await page.locator('#menu-names').isVisible() && page.errors.length === 0, `no How to play in the Menu (${lang})`);

@@ -67,14 +67,22 @@ Shawn's request: players can pick their own names for the three computer players
 
 Options page: https://sghanna.github.io/claude/hearts/options-names.html. It shows the four steps, then the judgment calls, each with Claude's choice, what happens without it, and one other way. Shawn's picks (Sept 25): up to 10 letters (Claude's choice; `?names=A,B,C` on a demo shows any names), and light boxes to type in (he overrode Claude's dark ones; `?field=dark`, `?field=plain` show the others). Choosing light showed that the typing box's pale edge vanished on cream, so the box she is typing in now gets a thick gold ring with a glow (Claude's choice, waiting for his pick; `?focus=pale|magenta`, and `?typing=2` marks a box as the one being typed in). `?show=menu|promise|names|thanks` opens those views on a demo page, and `?demo=pass` shows the start of a hand. Demo pages never save.
 
-## Help in two places (Sept 25, 2026, waiting for Shawn's pick)
+## Top bar without Help (Sept 25, 2026)
 
-Shawn asked why the rules are in two places (the Help button and Menu, How to play) and suggested dropping Help from the top bar. https://sghanna.github.io/claude/hearts/options-help.html shows: keep Help and drop How to play from the Menu (Claude's recommendation: her Solitaire has Help in its top bar), both (live now), or drop Help (`?help=0`; the title stays centered). `?howto=0` hides the Menu item.
+Shawn asked why the rules were in two places (the Help button and Menu, How to play). From https://sghanna.github.io/claude/hearts/options-help.html he chose to remove the Help button (Claude had recommended keeping it, as in her Solitaire, and dropping the Menu item instead) and to put the logo and title on the left. The rules are in Menu, How to play. With the room freed, the title is 27 px in all three languages (it was 20 px in English and hid its word in Spanish and Vietnamese). `?help=1` shows the old top bar, and the older options pages use it so they still show what was compared; `?howto=0` hides the Menu item.
+
+## Our own lettering for the title (Sept 25, 2026, waiting for Shawn's pick)
+
+Shawn asked for "Hearts" in our own lettering, drawn as SVG like the card faces, and only for the title next to the logo for now, so nothing else changes and screen readers keep working. `wordmark.js` holds "Hearts" in six SIL Open Font License fonts (Abril Fatface, Playfair Display Black, DM Serif Display, Yeseva One, Fraunces Black soft, Alfa Slab One), converted to paths with each font's own kerning (fontTools and HarfBuzz, from github.com/google/fonts). `?wordmark=abril|playfair|dmserif|yeseva|fraunces|alfaslab` draws it; the live title stays Georgia text until he picks. The drawing is hidden from screen readers and the heading keeps its words (in her language), visually hidden. The drawing says "Hearts" in every language. Options: https://sghanna.github.io/claude/hearts/options-wordmark.html
+
+## Screen readers (checked Sept 25, 2026)
+
+Shawn asked whether the card faces have the right accessibility controls. Checked with axe-core and the browser's accessibility tree: every card is announced by name ("queen of diamonds"), the drawn face is hidden from screen readers, cards she can't play are announced as unavailable, a chosen card as pressed, each suit row as a group ("Diamonds: 4"), the name plates with their scores, and the status line is read out as it changes. One gap fixed: cards on the table didn't say who played them, and the tags ("Led", "Winning") were read separately afterward; each now reads like "Jerry: 7 of hearts, Led". axe-core still reports two moderate page-structure items (no "main" landmark, some content outside landmarks), not about the cards; left for now, as fixing them means restructuring the page. Not yet tried with VoiceOver on a real iPhone.
 
 ## Tested (Sept 23-25, 2026)
 
 - `node hearts/tests/rules.test.mjs 5000` (from ~/claude): 30 rule checks plus 5,000 simulated games (54,865 hands, 713,245 tricks). Every play was legal, no card was ever lost or duplicated, every hand scored 26 (or 78 when someone shot the moon), and every game ended. All passed.
-- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 107 checks, all passed, in WebKit (Safari's engine). They cover:
+- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 137 checks, all passed, in WebKit (Safari's engine). They cover:
   - 3 complete games played through real taps, with no text overflow or scrolling at any step,
   - illegal taps explained,
   - save and restore mid-hand, and a damaged save,
@@ -99,6 +107,7 @@ Shawn asked why the rules are in two places (the Help button and Menu, How to pl
 ## Files
 
 - `index.html`, `style.css`: the screen
+- `wordmark.js`: the title drawn in six fonts, for the lettering options page
 - `app.js`: taps, drawing, pacing, saving, stats
 - `fx.js`: motion, sounds and celebrations
 - `options-*.html`, `options.css`: side-by-side choices for Shawn (not part of the installed app)

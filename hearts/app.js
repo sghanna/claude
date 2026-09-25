@@ -38,9 +38,14 @@
   // Name boxes: light, Shawn's pick (Sept 25, 2026). ?field=dark|plain shows the others on the options page.
   // Shawn's idea (Sept 25): ?field=swap, dark boxes until one is being typed in, then that box turns light.
   if (['dark', 'plain', 'swap'].includes(params.get('field'))) look.add('field-' + params.get('field'));
-  // Help is in the top bar and in the Menu ("How to play"). Options page: ?help=0 hides the top-bar button, ?howto=0 the Menu item.
-  if (params.get('help') === '0') look.add('no-help');
+  // Shawn removed the Help button from the top bar (Sept 25, 2026): the rules are in Menu, How to play, and the logo and title
+  // sit on the left. ?help=1 shows the old top bar (Help, centered title) and ?howto=0 hides the Menu item, for older options pages.
+  if (params.get('help') === '1') look.add('with-help');
   if (params.get('howto') === '0') look.add('no-howto');
+  // The title drawn as paths in one of six fonts (wordmark.js), for Shawn's pick on options-wordmark.html. Only the drawing
+  // changes: the words stay in the heading as text for screen readers, in her language.
+  const WORDMARK = window.WORDMARKS && WORDMARKS[params.get('wordmark')] ? WORDMARKS[params.get('wordmark')] : null;
+  const WORDMARK_CAP = 19;   // px, the height of the H: the same as the Georgia title it would replace
   if (['pale', 'magenta', 'edge'].includes(params.get('focus'))) look.add('focus-' + params.get('focus'));   // the box she is typing in; 'edge': no ring
   if (FAST) FX.setSpeedScale(0.04);
 
@@ -349,15 +354,16 @@
   }
 
   /* ---------------- Rendering ---------------- */
-  // The title shrinks to fit between Help and Menu (longer words in Spanish and Vietnamese); hidden if it can't.
+  // The title shrinks to fit beside Menu (longer words in Spanish); hidden if it can't.
   // With the icon showing, the words go first and the icon stays.
   function fitTitle() {
     const bar = document.querySelector('.topbar'), title = document.querySelector('.wordmark'), words = title.querySelector('span');
-    const half = bar.clientWidth / 2;   // the title is centered, so it must fit beside the wider button
-    const helpW = look.contains('no-help') ? 0 : $('help-button').offsetWidth;
-    const room = 2 * Math.min(half - helpW, half - $('menu-button').offsetWidth) - 24;
+    const half = bar.clientWidth / 2;   // old top bar: the title is centered, so it must fit beside the wider button
+    const room = look.contains('with-help') ? 2 * Math.min(half - $('help-button').offsetWidth, half - $('menu-button').offsetWidth) - 24
+      : bar.clientWidth - $('menu-button').offsetWidth - 12;
     title.style.visibility = '';
     words.style.display = '';
+    if (WORDMARK) return;   // drawn title: a fixed size that fits beside Menu on every phone
     let size = 27;
     title.style.fontSize = size + 'px';
     while (title.scrollWidth > room && size > 16) { size -= 1; title.style.fontSize = size + 'px'; }
@@ -393,10 +399,14 @@
     $('seats').querySelectorAll('.name').forEach(el => fitText(el, 18, 12));   // 12: a 10-letter name she picked fits on a 375-wide phone
   }
 
-  function cardBox(code, cls, remove) {
-    if (remove) return `<button type="button" class="card ${cls}" data-remove="${code}" aria-label="${cap(T.card(code))}">${faceSVG(code, dims.tw, dims.th)}</button>`;
-    return `<div class="card ${cls}" role="img" data-card="${code}" aria-label="${cap(T.card(code))}">${faceSVG(code, dims.tw, dims.th)}</div>`;
+  // A screen reader hears the card's name, never the drawing. On the table the label also says who played it and its tag
+  // ("Jerry: 7 of hearts, Led"); the tag underneath is then hidden from the screen reader so it isn't read twice.
+  function cardBox(code, cls, remove, label) {
+    const name = label || cap(T.card(code));
+    if (remove) return `<button type="button" class="card ${cls}" data-remove="${code}" aria-label="${name}">${faceSVG(code, dims.tw, dims.th)}</button>`;
+    return `<div class="card ${cls}" role="img" data-card="${code}" aria-label="${name}">${faceSVG(code, dims.tw, dims.th)}</div>`;
   }
+  const tagFor = (key, style) => `<span class="tag ${style}" aria-hidden="true">${T.t(key)}</span>`;
 
   function renderStage() {
     const cells = ['', '', '', ''], tags = ['', '', '', ''];
@@ -419,7 +429,7 @@
       let k = 0;
       COLS.forEach((seat, i) => {
         if (seat === giver) cells[i] = `<div class="direction"><span>${T.t('from')}</span><strong>${T.name(giver)}</strong></div>`;
-        else { cells[i] = cardBox(st.received[k], 'received'); tags[i] = `<span class="tag gold">${T.t('tagNew')}</span>`; k += 1; }
+        else { cells[i] = cardBox(st.received[k], 'received', false, `${cap(T.card(st.received[k]))}, ${T.t('tagNew')}`); tags[i] = tagFor('tagNew', 'gold'); k += 1; }
       });
     } else {
       const ended = st.phase === 'handEnd' || st.phase === 'gameEnd';
@@ -430,13 +440,12 @@
       COLS.forEach((seat, i) => {
         const played = plays.find(p => p.seat === seat);
         if (played) {
-          cells[i] = cardBox(played.card, done && seat === winner ? 'winner' : '');
-          if (done && seat === winner) tags[i] = `<span class="tag gold">${T.t('tagTakes')}</span>`;
-          else if (seat === winner && plays.length > 1) tags[i] = `<span class="tag gold">${T.t('tagWinning')}</span>`;
-          else if (seat === leader) tags[i] = `<span class="tag outline">${T.t('tagLed')}</span>`;
+          const tag = done && seat === winner ? 'tagTakes' : seat === winner && plays.length > 1 ? 'tagWinning' : seat === leader ? 'tagLed' : null;
+          cells[i] = cardBox(played.card, done && seat === winner ? 'winner' : '', false, `${T.name(seat)}: ${T.card(played.card)}${tag ? ', ' + T.t(tag) : ''}`);
+          if (tag) tags[i] = tagFor(tag, tag === 'tagLed' ? 'outline' : 'gold');
         } else if (seat === YOU && st.phase === 'play' && st.turn === YOU && st.sel.length) {
-          cells[i] = cardBox(st.sel[0], 'preview');
-          tags[i] = `<span class="tag pink">${T.t('tagChosen')}</span>`;
+          cells[i] = cardBox(st.sel[0], 'preview', false, `${T.name(YOU)}: ${T.card(st.sel[0])}, ${T.t('tagChosen')}`);
+          tags[i] = tagFor('tagChosen', 'pink');
         } else if (seat === YOU && st.phase === 'play' && st.turn === YOU) {
           cells[i] = `<div class="slot yours">${T.t('yourCard')}</div>`;
         } else {
@@ -820,6 +829,12 @@
   window.__hearts = { state: () => st, settings: () => settings, stats: () => stats, announce: h => { announce(h); renderStatus(); }, commit, rules: H, load: s => { st = s; commit(); }, hold: clearTimers, resume: schedule, tap: tapCard };
 
   /* ---------------- Start ---------------- */
+  if (WORDMARK) {
+    const title = document.querySelector('.wordmark');
+    title.classList.add('drawn');
+    title.insertAdjacentHTML('beforeend', `<svg class="wordmark-art" viewBox="${WORDMARK.box.join(' ')}" aria-hidden="true" focusable="false"` +
+      ` style="height:${r2(WORDMARK_CAP * WORDMARK.box[3] / WORDMARK.cap)}px"><path d="${WORDMARK.d}"/></svg>`);
+  }
   applyLanguage();
   if (DEMO) {
     runDemo(DEMO);
