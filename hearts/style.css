@@ -343,3 +343,10 @@ input { -webkit-user-select: text; user-select: text; -webkit-touch-callout: def
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
   overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
 }
+
+/* Backup for the drawn title (no drawing for her language, or wordmark.js didn't load): the iPhone's own serif, New York,
+   in its Black weight to match Fraunces Black; Georgia and then any serif elsewhere. (Claude's pick; options page:
+   .titlefont-georgia is the title as it was, .titlefont-iowan another iPhone serif.) */
+.wordmark { font-family: ui-serif, Georgia, "Times New Roman", serif; font-weight: 900; }   /* ui-serif is New York in Safari */
+.titlefont-georgia .wordmark { font-family: Georgia, "Times New Roman", serif; font-weight: 700; }
+.titlefont-iowan .wordmark { font-family: "Iowan Old Style", Georgia, "Times New Roman", serif; font-weight: 900; }

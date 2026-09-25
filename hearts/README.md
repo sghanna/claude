@@ -71,9 +71,13 @@ Options page: https://sghanna.github.io/claude/hearts/options-names.html. It sho
 
 Shawn asked why the rules were in two places (the Help button and Menu, How to play). From https://sghanna.github.io/claude/hearts/options-help.html he chose to remove the Help button (Claude had recommended keeping it, as in her Solitaire, and dropping the Menu item instead) and to put the logo and title on the left. The rules are in Menu, How to play. With the room freed, the title is 27 px in all three languages (it was 20 px in English and hid its word in Spanish and Vietnamese). `?help=1` shows the old top bar, and the older options pages use it so they still show what was compared; `?howto=0` hides the Menu item.
 
-## Our own lettering for the title (Sept 25, 2026, waiting for Shawn's pick)
+## Our own lettering for the title (Sept 25, 2026)
 
-Shawn asked for "Hearts" in our own lettering, drawn as SVG like the card faces, and only for the title next to the logo for now, so nothing else changes and screen readers keep working. `wordmark.js` holds "Hearts" in six SIL Open Font License fonts (Abril Fatface, Playfair Display Black, DM Serif Display, Yeseva One, Fraunces Black soft, Alfa Slab One), converted to paths with each font's own kerning (fontTools and HarfBuzz, from github.com/google/fonts). `?wordmark=abril|playfair|dmserif|yeseva|fraunces|alfaslab` draws it; the live title stays Georgia text until he picks. The drawing is hidden from screen readers and the heading keeps its words (in her language), visually hidden. The drawing says "Hearts" in every language. Options: https://sghanna.github.io/claude/hearts/options-wordmark.html
+Shawn asked for "Hearts" in our own lettering, drawn as SVG like the card faces, and only for the title next to the logo for now, so nothing else changes and screen readers keep working. `wordmark.js` holds "Hearts" in six SIL Open Font License fonts (Abril Fatface, Playfair Display Black, DM Serif Display, Yeseva One, Fraunces Black soft, Alfa Slab One), converted to paths with each font's own kerning (fontTools and HarfBuzz, from github.com/google/fonts). Shawn picked **Fraunces Black, soft** (over Claude's recommendation, Abril Fatface); it is live. The drawing is hidden from screen readers and the heading keeps its words (in her language), visually hidden. He asked to keep "Corazones", the name Spanish speakers use for the game, so Spanish gets its own drawn title; Vietnamese already calls the game "Hearts". `drawTitle()` in app.js picks the drawing for the current title and redraws on a language change. To draw a new title, add the word to `WORDS` in `tools/build-wordmark.py` and run it.
+
+**Backup font.** The drawing needs no font on the phone, so it always shows. If there is no drawing for the title (a new language) or wordmark.js fails to load, the title shows as text in the iPhone's own serif: `ui-serif` (New York, built in since iOS 13) in its Black weight, then Georgia, then any serif. Claude's pick, as Shawn asked for an iOS-native serif; `?titlefont=georgia|iowan` show the alternatives. Browsers other than Safari don't know `ui-serif` and use Georgia.
+
+Options: https://sghanna.github.io/claude/hearts/options-wordmark.html (`?wordmark=abril|playfair|dmserif|yeseva|alfaslab` for the other fonts, `none` for text; older options pages use `wordmark=none&titlefont=georgia` to keep showing the title as it was). The Home Screen name under the icon is still "Hearts" in every language.
 
 ## Screen readers (checked Sept 25, 2026)
 
@@ -82,7 +86,7 @@ Shawn asked whether the card faces have the right accessibility controls. Checke
 ## Tested (Sept 23-25, 2026)
 
 - `node hearts/tests/rules.test.mjs 5000` (from ~/claude): 30 rule checks plus 5,000 simulated games (54,865 hands, 713,245 tricks). Every play was legal, no card was ever lost or duplicated, every hand scored 26 (or 78 when someone shot the moon), and every game ended. All passed.
-- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 137 checks, all passed, in WebKit (Safari's engine). They cover:
+- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 143 checks, all passed, in WebKit (Safari's engine). They cover:
   - 3 complete games played through real taps, with no text overflow or scrolling at any step,
   - illegal taps explained,
   - save and restore mid-hand, and a damaged save,
@@ -107,7 +111,8 @@ Shawn asked whether the card faces have the right accessibility controls. Checke
 ## Files
 
 - `index.html`, `style.css`: the screen
-- `wordmark.js`: the title drawn in six fonts, for the lettering options page
+- `wordmark.js`: the title drawn as paths (Fraunces live, five other fonts for the options page); `tools/build-wordmark.py` makes it
+- `options-img/`: pictures of the backup title fonts from Safari's engine
 - `app.js`: taps, drawing, pacing, saving, stats
 - `fx.js`: motion, sounds and celebrations
 - `options-*.html`, `options.css`: side-by-side choices for Shawn (not part of the installed app)

@@ -8,15 +8,21 @@
 .grid { max-width: 1320px; margin: 26px auto 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(398px, 1fr)); gap: 34px 28px; justify-items: center; }
 article p { min-height: 78px; }
 .specimen {
-  width: 398px; max-width: 100%; height: 150px; border-radius: 18px; border: 4px solid #59675e;
+  width: 398px; max-width: 100%; height: 150px; border-radius: 18px; border: 4px solid #59675e; overflow: hidden;
   background: radial-gradient(circle at 50% 30%, #1a4630 0%, #0f2c1f 60%, #05130d 100%);
   display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px;
 }
-.specimen img { width: 76px; height: 76px; border-radius: 17px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6); }
-.specimen svg { height: 56px; width: auto; fill: #fff7df; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.7)); }
+.specimen img.logo { width: 76px; height: 76px; border-radius: 17px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6); }
+.specimen svg { width: auto; fill: #fff7df; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.7)); }
 .specimen .georgia { font: 700 76px/1 Georgia, "Times New Roman", serif; color: #fff7df; text-shadow: 0 3px 8px rgba(0, 0, 0, 0.7); }
-.crop { width: 398px; max-width: 100%; height: 190px; overflow: hidden; border: 4px solid #59675e; border-radius: 25px 25px 8px 8px; }
+.specimen img.shot { display: block; width: 390px; height: 142px; }
+.crop { width: 398px; max-width: 100%; height: 198px; overflow: hidden; border: 4px solid #59675e; border-radius: 25px 25px 8px 8px; }
+.crop img { display: block; width: 390px; height: 190px; }
 .note { max-width: 860px; color: #bdcbbf; font-size: 16px; line-height: 1.5; margin: 10px 0 0; }
+section { margin: 40px auto 56px; }
+.head { max-width: 1280px; margin: 0 auto; }
+.head h2.part { margin: 0 0 6px; font: 600 30px/1.15 Georgia, serif; }
+.head p.lead { max-width: 860px; margin: 0; color: #d3dbd5; font-size: 17px; line-height: 1.55; }
 </style>
 <title>Hearts - the title lettering (Claude)</title>
 </head>
@@ -24,29 +30,80 @@ article p { min-height: 78px; }
 <header>
   <div class="eyebrow">Claude Hearts: visual choices for Shawn</div>
   <h1>Our own lettering for "Hearts"</h1>
-  <p class="intro">Six fonts for the title next to the logo, each drawn as shapes like the card faces, so it looks the same on every phone. Only the title changes. Each option shows the lettering large, then the top of her screen at real size. The title stays the same height as today's; the size can be a separate choice once you have picked a font.</p>
-  <p class="note">Screen readers: the drawing is hidden from them, and the heading still holds the words, so VoiceOver reads "Hearts" (or "Corazones" in Spanish) exactly as it does now. One thing to know: the drawing says "Hearts" in every language, like the name under the Home Screen icon; today's title says "Corazones" in Spanish. All six fonts are free to use (SIL Open Font License).</p>
+  <p class="intro">The title next to the logo, drawn as shapes like the card faces, so it looks the same on every phone and needs no font installed. <strong>Your pick (Sept 25): Fraunces Black, soft. Live now.</strong> Only the title uses it.</p>
+  <p class="note">Screen readers: the drawing is hidden from them, and the heading still holds the words, so VoiceOver reads "Hearts" (or "Corazones" in Spanish) as before. All six fonts are free to use (SIL Open Font License).</p>
 </header>
-<div class="grid" id="grid"></div>
+
+<section>
+  <div class="head">
+    <h2 class="part">1. The six fonts</h2>
+    <p class="lead">Each shows the lettering large, then the top of her screen at real size. The title is the same height as before.</p>
+  </div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section>
+  <div class="head">
+    <h2 class="part">2. In each language</h2>
+    <p class="lead">You asked to keep "Corazones", the name Spanish speakers use for the game, so it is drawn in Fraunces too. Vietnamese already calls the game "Hearts". Live now.</p>
+  </div>
+  <div class="grid">
+    <article><div class="eyebrow">English</div><h2>Hearts</h2><div class="crop"><iframe title="English" src="index.html?demo=follow&amp;lang=en"></iframe></div></article>
+    <article><div class="eyebrow">Spanish</div><h2>Corazones</h2><div class="crop"><iframe title="Spanish" src="index.html?demo=follow&amp;lang=es"></iframe></div></article>
+    <article><div class="eyebrow">Vietnamese</div><h2>Hearts</h2><div class="crop"><iframe title="Vietnamese" src="index.html?demo=follow&amp;lang=vi"></iframe></div></article>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+    <h2 class="part">3. The backup font</h2>
+    <p class="lead">The drawn title always shows, because it doesn't need Fraunces on the phone. The backup appears only if the drawing file fails to load, or for a language added later without a drawing. You asked for a serif that comes with the iPhone. These are pictures from Safari's engine (what her iPhone uses), because other browsers can't show the iPhone's New York font.</p>
+  </div>
+  <div class="grid">
+    <article>
+      <div class="eyebrow">Option 1: my choice (live now)</div>
+      <h2>New York Black</h2>
+      <p>The iPhone's own serif, built in since iOS 13. It has a Black weight like Fraunces Black. Other browsers fall back to Georgia, then any serif.</p>
+      <div class="specimen"><img class="shot" src="options-img/titlefont-newyork-big.png" alt="New York Black"></div>
+      <div class="crop"><img src="options-img/titlefont-newyork-phone.png" alt="New York on her screen"></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 2: without it</div>
+      <h2>Georgia Bold</h2>
+      <p>The title's font before today, also on every iPhone. It stops at Bold, so it is a little lighter.</p>
+      <div class="specimen"><img class="shot" src="options-img/titlefont-georgia-big.png" alt="Georgia Bold"></div>
+      <div class="crop"><img src="options-img/titlefont-georgia-phone.png" alt="Georgia on her screen"></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 3: another way</div>
+      <h2>Iowan Old Style Black</h2>
+      <p>Another serif that comes with the iPhone (a reading font in Apple Books). Wider and more traditional.</p>
+      <div class="specimen"><img class="shot" src="options-img/titlefont-iowan-big.png" alt="Iowan Old Style Black"></div>
+      <div class="crop"><img src="options-img/titlefont-iowan-phone.png" alt="Iowan Old Style on her screen"></div>
+    </article>
+  </div>
+</section>
+
 <script src="wordmark.js"></script>
 <script>
 const OPTIONS = [
-  ['live', 'Live now', 'Georgia bold', "The phone's own font today. It depends on the phone having Georgia."],
+  ['before', 'Before', 'Georgia bold', "The phone's own font, the title until today."],
   ['abril', 'Option 1: my recommendation', 'Abril Fatface', 'Heavy, with thick and hair-thin strokes: the same style as the ranks on the cards, so the title and the cards look like one family. The cost: at title size the thin strokes are very thin.'],
   ['playfair', 'Option 2: another way', 'Playfair Display Black', 'Very close to Option 1, a touch lighter.'],
   ['dmserif', 'Option 3: another way', 'DM Serif Display', 'Calmer and less heavy, like a classic book cover.'],
   ['yeseva', 'Option 4: another way', 'Yeseva One', 'The widest of the six, thick and thin with a gentler, more decorative feel.'],
-  ['fraunces', 'Option 5: another way', 'Fraunces Black, soft', 'Warm and rounded. Its thin parts are thicker than the others, so it holds up at small sizes.'],
+  ['fraunces', 'Option 5: your pick (live now)', 'Fraunces Black, soft', 'Warm and rounded. Its thin parts are thicker than the others, so it holds up at small sizes.'],
   ['alfaslab', 'Option 6: another way', 'Alfa Slab One', 'Heavy block serifs, very sturdy, with no hair-thin strokes. Likely the easiest to read small, and the least like the cards.']
 ];
 const grid = document.getElementById('grid');
 for (const [key, eyebrow, name, text] of OPTIONS) {
-  const w = WORDMARKS[key];
-  const art = w ? `<svg viewBox="${w.box.join(' ')}" style="height:${(56 * w.box[3] / w.cap).toFixed(1)}px" aria-hidden="true"><path d="${w.d}"/></svg>` : '<span class="georgia" aria-hidden="true">Hearts</span>';
+  const w = WORDMARKS[key], hearts = w && w.words.Hearts;
+  const art = hearts ? `<svg viewBox="${hearts.box.join(' ')}" style="height:${(56 * hearts.box[3] / w.cap).toFixed(1)}px" aria-hidden="true"><path d="${hearts.d}"/></svg>` : '<span class="georgia" aria-hidden="true">Hearts</span>';
+  const q = hearts ? '&wordmark=' + key : '&wordmark=none&titlefont=georgia';
   const a = document.createElement('article');
   a.innerHTML = `<div class="eyebrow">${eyebrow}</div><h2>${name}</h2><p>${text}</p>` +
-    `<div class="specimen" role="img" aria-label="${name}"><img src="icon-180.png" alt="">${art}</div>` +
-    `<div class="crop"><iframe title="${name} on her screen" src="index.html?demo=follow${w ? '&wordmark=' + key : ''}"></iframe></div>`;
+    `<div class="specimen" role="img" aria-label="${name}"><img class="logo" src="icon-180.png" alt="">${art}</div>` +
+    `<div class="crop"><iframe title="${name} on her screen" src="index.html?demo=follow${q}"></iframe></div>`;
   grid.appendChild(a);
 }
 </script>

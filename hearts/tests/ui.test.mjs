@@ -518,19 +518,47 @@ for (const lang of ['en', 'es', 'vi']) {
   await page.close();
 }
 
-// Drawn title options: they fit beside Menu, and screen readers still get the words in her language.
-for (const key of ['abril', 'playfair', 'dmserif', 'yeseva', 'fraunces', 'alfaslab']) {
-  for (const [lang, word] of [['en', 'Hearts'], ['es', 'Corazones']]) {
-    const page = await newPage(375, 667, `&demo=follow&wordmark=${key}&lang=${lang}`);
-    const m = await page.evaluate(() => {
-      const art = document.querySelector('.wordmark-art'), menu = document.getElementById('menu-button').getBoundingClientRect();
-      const r = art.getBoundingClientRect();
-      return { h: Math.round(r.height), clear: r.left >= 0 && r.right <= menu.left, hidden: art.getAttribute('aria-hidden') === 'true' };
-    });
-    const heading = await page.getByRole('heading', { level: 1 }).textContent();
-    ok(m.h >= 19 && m.clear && m.hidden && heading.trim() === word && await fits(page), `drawn title ${key} (${lang}): fits beside Menu, screen readers hear "${heading.trim()}" ${JSON.stringify(m)}`);
+// Drawn title: Fraunces is live ("Corazones" in Spanish); it fits beside Menu, and screen readers still get the words in her language.
+// The other five fonts (options page) have only "Hearts", so in Spanish they show the text in the backup font.
+const titleCheck = page => page.evaluate(() => {
+  const art = document.querySelector('.wordmark-art'), words = document.querySelector('.wordmark span'), menu = document.getElementById('menu-button').getBoundingClientRect();
+  const r = (art || document.querySelector('.wordmark')).getBoundingClientRect();
+  return { drawn: !!art, h: Math.round(r.height), clear: r.left >= 0 && r.right <= menu.left, hidden: !art || art.getAttribute('aria-hidden') === 'true',
+    textShows: words.getBoundingClientRect().width > 20, font: getComputedStyle(document.querySelector('.wordmark')).fontFamily };
+});
+for (const key of ['', 'abril', 'playfair', 'dmserif', 'yeseva', 'fraunces', 'alfaslab']) {
+  for (const [lang, word] of [['en', 'Hearts'], ['es', 'Corazones'], ['vi', 'Hearts']]) {
+    if (key && key !== 'fraunces' && lang === 'vi') continue;
+    const page = await newPage(375, 667, `&demo=follow&lang=${lang}${key ? '&wordmark=' + key : ''}`);
+    const m = await titleCheck(page);
+    const heading = (await page.getByRole('heading', { level: 1 }).textContent()).trim();
+    const drawn = !key || key === 'fraunces' || lang !== 'es';
+    ok(m.drawn === drawn && m.textShows === !drawn && m.h >= 19 && m.clear && m.hidden && heading === word && await fits(page),
+      `title ${key || 'default'} (${lang}): ${drawn ? 'drawn' : 'backup text'}, fits beside Menu, screen readers hear "${heading}" ${JSON.stringify(m)}`);
     await page.close();
   }
+}
+{
+  // If the drawing file doesn't load, the title shows as text in the iPhone's own serif (ui-serif), then Georgia.
+  const ctx = await browser.newContext(phone(390, 844));
+  await ctx.route('**/wordmark.js', r => r.abort());
+  const page = await ctx.newPage();
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await page.goto(BASE + 'index.html?fast=1&demo=follow');
+  await page.waitForFunction(() => window.__hearts);
+  const m = await titleCheck(page);
+  ok(!m.drawn && m.textShows && m.font.startsWith('ui-serif') && m.clear && errs.length === 0, 'no drawing file: title shows as text in the backup font ' + JSON.stringify(m) + ' ' + errs.join(' | '));
+  // Changing the language in Settings redraws the title.
+  await ctx.unroute('**/wordmark.js');
+  await page.goto(BASE + 'index.html?fast=1&seed=3');
+  await page.waitForFunction(() => window.__hearts);
+  await page.locator('#menu-button').tap(); await page.locator('#menu-settings').tap();
+  await page.locator('[data-set="lang"][data-val="es"]').tap();
+  const es = await page.$eval('.wordmark-art', el => el.viewBox.baseVal.width);
+  await page.locator('[data-set="lang"][data-val="en"]').tap();
+  const en = await page.$eval('.wordmark-art', el => el.viewBox.baseVal.width);
+  ok(es > en * 1.3 && await page.locator('.wordmark-art').count() === 1, `language change redraws the title (Corazones ${es}, Hearts ${en})`);
+  await ctx.close();
 }
 
 // 11. No Help button in the top bar (Shawn, Sept 25): logo and title on the left, rules in Menu > How to play.

@@ -42,10 +42,13 @@
   // sit on the left. ?help=1 shows the old top bar (Help, centered title) and ?howto=0 hides the Menu item, for older options pages.
   if (params.get('help') === '1') look.add('with-help');
   if (params.get('howto') === '0') look.add('no-howto');
-  // The title drawn as paths in one of six fonts (wordmark.js), for Shawn's pick on options-wordmark.html. Only the drawing
-  // changes: the words stay in the heading as text for screen readers, in her language.
-  const WORDMARK = window.WORDMARKS && WORDMARKS[params.get('wordmark')] ? WORDMARKS[params.get('wordmark')] : null;
-  const WORDMARK_CAP = 19;   // px, the height of the H: the same as the Georgia title it would replace
+  // The title is drawn as paths in Fraunces Black soft (Shawn's pick, Sept 25, 2026; wordmark.js), like the card faces, so it
+  // needs no font on the phone. The words stay in the heading as text for screen readers, in her language. If there is no
+  // drawing for the title in her language (or wordmark.js didn't load), the text shows in the phone's own serif instead.
+  // Options pages: ?wordmark=<other font> or none; ?titlefont=georgia|iowan for the backup font.
+  const WORDMARK = params.get('wordmark') === 'none' || !window.WORDMARKS ? null : WORDMARKS[params.get('wordmark')] || WORDMARKS.fraunces || null;
+  const WORDMARK_CAP = 19;   // px, the height of the H: the same as the Georgia title it replaced
+  if (['georgia', 'iowan'].includes(params.get('titlefont'))) look.add('titlefont-' + params.get('titlefont'));
   if (['pale', 'magenta', 'edge'].includes(params.get('focus'))) look.add('focus-' + params.get('focus'));   // the box she is typing in; 'edge': no ring
   if (FAST) FX.setSpeedScale(0.04);
 
@@ -363,7 +366,7 @@
       : bar.clientWidth - $('menu-button').offsetWidth - 12;
     title.style.visibility = '';
     words.style.display = '';
-    if (WORDMARK) return;   // drawn title: a fixed size that fits beside Menu on every phone
+    if (title.classList.contains('drawn')) return;   // drawn title: a fixed size that fits beside Menu on every phone
     let size = 27;
     title.style.fontSize = size + 'px';
     while (title.scrollWidth > room && size > 16) { size -= 1; title.style.fontSize = size + 'px'; }
@@ -681,8 +684,19 @@
     render();
   }
 
+  // The drawn title for her language ("Hearts", or "Corazones" in Spanish), or the text in the backup font if there is none.
+  function drawTitle() {
+    const title = document.querySelector('.wordmark'), old = title.querySelector('.wordmark-art');
+    if (old) old.remove();
+    const art = WORDMARK && WORDMARK.words[T.t('title')];
+    title.classList.toggle('drawn', !!art);
+    if (art) title.insertAdjacentHTML('beforeend', `<svg class="wordmark-art" viewBox="${art.box.join(' ')}" aria-hidden="true" focusable="false"` +
+      ` style="height:${r2(WORDMARK_CAP * art.box[3] / WORDMARK.cap)}px"><path d="${art.d}"/></svg>`);
+  }
+
   function applyLanguage() {
     document.querySelectorAll('[data-t]').forEach(el => { el.innerHTML = T.t(el.dataset.t); });
+    drawTitle();
     $('rules').innerHTML = T.t('rules').map(r => `<li>${r}</li>`).join('');
     document.title = T.t('title');
   }
@@ -829,12 +843,6 @@
   window.__hearts = { state: () => st, settings: () => settings, stats: () => stats, announce: h => { announce(h); renderStatus(); }, commit, rules: H, load: s => { st = s; commit(); }, hold: clearTimers, resume: schedule, tap: tapCard };
 
   /* ---------------- Start ---------------- */
-  if (WORDMARK) {
-    const title = document.querySelector('.wordmark');
-    title.classList.add('drawn');
-    title.insertAdjacentHTML('beforeend', `<svg class="wordmark-art" viewBox="${WORDMARK.box.join(' ')}" aria-hidden="true" focusable="false"` +
-      ` style="height:${r2(WORDMARK_CAP * WORDMARK.box[3] / WORDMARK.cap)}px"><path d="${WORDMARK.d}"/></svg>`);
-  }
   applyLanguage();
   if (DEMO) {
     runDemo(DEMO);
