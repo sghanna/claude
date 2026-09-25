@@ -38,6 +38,13 @@
       speed: 'Game speed', slow: 'Slow', normal: 'Normal', sound: 'Sound', on: 'On', off: 'Off', language: 'Language', done: 'Done',
       gotIt: 'Got it', rotate: 'Please turn your phone upright to play.',
       restoreFail: 'The saved game could not be opened, so a new game started.',
+      mNames: 'Name your opponents',
+      promise1: 'Give the other three players any names you like. The game itself stays the same.',
+      promise2: 'To turn this on, we ask one thing: please donate to a school in your neighborhood. You can choose any school you like.',
+      promise3: 'There is nothing to pay here. We trust you to do it.',
+      promiseYes: 'I promise to donate', notNow: 'Not now', namesThanks: 'Thank you for supporting a school!',
+      seatLeft: 'On your left', seatAcross: 'Across from you', seatRight: 'On your right',
+      namesNote: 'Up to {n} letters each.', saveNames: 'Save names', usualNames: 'Use the usual names', cancel: 'Cancel',
       rules: [
         'Each hand, choose 3 cards to pass: left, then right, then across, then a hand with no passing.',
         'Your cards sit in four rows: clubs, diamonds, spades, hearts.',
@@ -88,6 +95,13 @@
       speed: 'Velocidad', slow: 'Lenta', normal: 'Normal', sound: 'Sonido', on: 'Sí', off: 'No', language: 'Idioma', done: 'Listo',
       gotIt: 'Entendido', rotate: 'Pon el teléfono en vertical para jugar.',
       restoreFail: 'No se pudo abrir la partida guardada; empezó una nueva.',
+      mNames: 'Nombrar a los rivales',
+      promise1: 'Pon a los otros tres jugadores los nombres que quieras. El juego sigue igual.',
+      promise2: 'Para activarlo te pedimos una cosa: por favor, haz una donación a una escuela de tu barrio. Puedes elegir la escuela que quieras.',
+      promise3: 'Aquí no se paga nada. Confiamos en que lo harás.',
+      promiseYes: 'Prometo donar', notNow: 'Ahora no', namesThanks: '¡Gracias por apoyar a una escuela!',
+      seatLeft: 'A tu izquierda', seatAcross: 'Enfrente de ti', seatRight: 'A tu derecha',
+      namesNote: 'Hasta {n} letras cada uno.', saveNames: 'Guardar nombres', usualNames: 'Volver a los nombres de siempre', cancel: 'Cancelar',
       rules: [
         'En cada mano eliges 3 cartas para pasar: a la izquierda, a la derecha, al frente y luego una mano sin pasar.',
         'Tus cartas están en cuatro filas: tréboles, diamantes, picas y corazones.',
@@ -139,6 +153,13 @@
       speed: 'Tốc độ', slow: 'Chậm', normal: 'Bình thường', sound: 'Âm thanh', on: 'Bật', off: 'Tắt', language: 'Ngôn ngữ', done: 'Xong',
       gotIt: 'Đã hiểu', rotate: 'Vui lòng xoay điện thoại thẳng đứng để chơi.',
       restoreFail: 'Không mở được ván đã lưu, nên đã bắt đầu ván mới.',
+      mNames: 'Đặt tên đối thủ',
+      promise1: 'Đặt tên tùy ý cho ba người chơi kia. Cách chơi vẫn giữ nguyên.',
+      promise2: 'Để mở tính năng này, chúng tôi chỉ xin một điều: hãy quyên góp cho một trường học trong khu phố của bạn. Bạn có thể chọn bất kỳ trường nào.',
+      promise3: 'Ở đây không phải trả tiền. Chúng tôi tin bạn sẽ làm.',
+      promiseYes: 'Tôi hứa sẽ quyên góp', notNow: 'Để sau', namesThanks: 'Cảm ơn bạn đã ủng hộ trường học!',
+      seatLeft: 'Bên trái bạn', seatAcross: 'Đối diện bạn', seatRight: 'Bên phải bạn',
+      namesNote: 'Tối đa {n} ký tự mỗi tên.', saveNames: 'Lưu tên', usualNames: 'Dùng lại tên ban đầu', cancel: 'Hủy',
       rules: [
         'Mỗi ván, chọn 3 lá để chuyền: sang trái, sang phải, đối diện, rồi một ván không chuyền.',
         'Bài của bạn xếp thành bốn hàng: chuồn, rô, bích, cơ.',
@@ -158,7 +179,7 @@
   };
 
   const LANGS = Object.keys(STR);
-  let lang = 'en';
+  let lang = 'en', custom = [];
 
   function fill(text, vars) {
     return String(text).replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m));
@@ -174,7 +195,10 @@
     },
     t(key, vars) { const v = STR[lang][key] !== undefined ? STR[lang][key] : STR.en[key]; return typeof v === 'string' ? fill(v, vars) : v; },
     langName: l => STR[l].langName,
-    name: seat => STR[lang].names[seat],
+    // Names she chose for the other players (Menu, Name your opponents) are kept in every language.
+    setNames(list) { custom = Array.isArray(list) ? list : []; },
+    name: seat => (seat && custom[seat]) || STR[lang].names[seat],
+    defaultName: seat => STR[lang].names[seat],
     suits: s => STR[lang].suits[s],
     suit1: s => STR[lang].suit1[s],
     dir: d => STR[lang].dir[d],

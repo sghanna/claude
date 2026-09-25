@@ -69,7 +69,7 @@ button:focus-visible { outline: 4px solid #7dd3fc; outline-offset: 3px; }
 
 /* ---------- Seats: one column per player, in seating order starting at your left ---------- */
 .table { flex: 0 0 auto; }
-.seats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; height: 52px; }
+.seats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; height: 52px; }   /* a long name shrinks, never widens its box */
 .plate {
   position: relative;
   height: 52px; border-radius: 14px; border: 2px solid var(--brass);
@@ -87,7 +87,7 @@ button:focus-visible { outline: 4px solid #7dd3fc; outline-offset: 3px; }
 
 /* ---------- Stage: the trick (or the pass) directly under each player's name ---------- */
 .stage {
-  display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 6px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 6px;
   grid-template-rows: var(--th) var(--tag-h);
   margin-top: 6px;
 }
@@ -246,8 +246,10 @@ table.scores tr.best td:first-child::after { content: " \2605"; color: var(--bra
   border: 2px solid var(--brass-dim); background: var(--navy); color: #fff; font-size: 19px; font-weight: 800;
 }
 .seg button[aria-pressed="true"] { background: var(--brass); border-color: var(--brass-light); color: var(--navy-solid); }
-.mini-trick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 4px 0 6px; text-align: center; }
-.mini-trick .who { font-size: 16px; font-weight: 800; margin-bottom: 4px; color: #fff; white-space: nowrap; overflow: hidden; }
+.mini-trick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 4px 0 6px; text-align: center; }
+.mini-trick .who { font-size: 16px; font-weight: 800; margin-bottom: 4px; color: #fff; line-height: 1.15; overflow: hidden; }
+/* A two-word name she picked may take two lines here; the cards stay lined up along the bottom. */
+.mini-trick > div { display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
 .mini-trick .card { position: relative; margin: 0 auto; cursor: default; }
 .rotate-note {
   display: none; position: fixed; inset: 0; z-index: 200; background: #05130d;
@@ -290,3 +292,29 @@ table.scores tr.best td:first-child::after { content: " \2605"; color: var(--bra
 .badge-big .badge { top: -24px; min-width: 38px; height: 30px; border-radius: 15px; font-size: 20px; line-height: 26px; padding: 0 7px; }
 .badge-now .table { margin-top: 0; }
 .badge-now .badge { top: -9px; right: -5px; min-width: 30px; height: 24px; border-radius: 12px; font-size: 15px; line-height: 20px; padding: 0 6px; }
+
+/* ---------- Name your opponents (Sept 25, 2026) ---------- */
+/* The one place that takes typing: the fields need a caret, so they allow selection (nothing else does). */
+input { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+.name-field { display: block; margin: 0 0 12px; }
+.name-field span { display: block; margin-bottom: 6px; font-size: 18px; font-weight: 800; color: var(--brass-light); }
+.name-field input {
+  display: block; width: 100%; height: 56px; margin: 0; padding: 0 16px;
+  border-radius: 14px; border: 2px solid var(--brass); background: var(--navy-solid); color: #fff;
+  font: 800 22px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-appearance: none; appearance: none;
+}
+.name-field input::placeholder { color: rgba(255, 255, 255, 0.55); }
+.name-field input:focus { outline: none; border-color: var(--brass-light); box-shadow: 0 0 0 3px rgba(254, 240, 138, 0.6); }
+#names-form .note { margin: 2px 0 0; }
+/* Near the top of the screen, so the keyboard (lower half) doesn't cover the names she is typing. */
+#names-dialog { align-items: flex-start; padding-top: calc(var(--safe-top) + 6px); }
+#names-dialog .dialog { max-height: 100%; }
+.direction strong { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; }
+/* Options page only: the other looks. */
+.field-light .name-field input { background: #fffdf5; color: var(--navy-solid); }
+.field-light .name-field input::placeholder { color: rgba(15, 23, 42, 0.5); }
+.field-plain .name-field input {
+  height: auto; padding: 2px 4px; border-radius: 4px; border: 1px solid #767676; background: #fff; color: #000;
+  font: 400 16px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}

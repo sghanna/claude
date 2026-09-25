@@ -399,6 +399,102 @@ for (const [w, h] of [[390, 844], [390, 763], [390, 740], [375, 667]]) {
   await ctx.close();
 }
 
+// 10. Name your opponents: a promise to donate to a school opens it, and only the names change.
+const namesFit = page => page.evaluate(() => [...document.querySelectorAll('.plate .name, .direction strong, .mini-trick .who')]
+  .filter(el => el.offsetParent).every(el => el.scrollWidth <= el.clientWidth + 1) &&
+  [...document.querySelectorAll('.plate')].every(el => { const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; }) &&
+  [...document.querySelectorAll('.mini-trick')].filter(el => el.offsetParent).every(el => el.scrollWidth <= el.clientWidth + 1));
+{
+  const page = await newPage(390, 844, '&seed=5');
+  const plates = () => page.$$eval('.plate .name', els => els.map(e => e.textContent).join(','));
+  const settings = () => page.evaluate(() => window.__hearts.settings());
+  const before = JSON.stringify(await state(page));
+  await page.locator('#menu-button').tap();
+  await page.locator('#menu-names').tap();
+  const ask = await page.locator('#names-body').textContent();
+  ok(await page.locator('#names-dialog').isVisible() && ask.includes('donate to a school in your neighborhood') && ask.includes('any school you like') && ask.includes('We trust you'),
+    'names: asks for the promise first (a school in her neighborhood, any school, on trust)');
+  ok(await page.locator('#names-body input').count() === 0, 'names: no name fields before the promise');
+  await page.locator('#names-body [data-close]').tap();
+  ok(await page.locator('#names-dialog').isHidden() && !(await settings()).promised, 'names: Not now closes and nothing opens');
+  await page.locator('#menu-button').tap();
+  await page.locator('#menu-names').tap();
+  await page.locator('#promise-yes').tap();
+  ok((await settings()).promised === true && (await page.locator('#names-body .moon').textContent()).includes('Thank you'), 'names: the promise turns it on, with a thank-you');
+  ok(await page.$$eval('#names-body input', els => els.map(e => e.value).join()) === 'Michael,Jerry,Barbara', 'names: the fields start with the current names');
+  ok(await page.$eval('#names-body input', el => getComputedStyle(el).webkitUserSelect) === 'text', 'names: the fields take typing');
+  await page.locator('#names-body input[data-seat="1"]').fill('Grandma Jo');
+  await page.locator('#names-body input[data-seat="1"]').press('Enter');
+  ok(await page.evaluate(() => document.activeElement.dataset.seat) === '2' && await page.locator('#names-dialog').isVisible(), 'names: Next on the keyboard goes to the next name');
+  await page.locator('#names-body input[data-seat="2"]').fill('<img src=x onerror=alert(1)>');
+  await page.locator('#names-body input[data-seat="3"]').fill('   ');
+  await page.touchscreen.tap(195, 836);   // outside the box, e.g. to put the keyboard away
+  ok(await page.locator('#names-dialog').isVisible() && await page.locator('#names-body input[data-seat="1"]').inputValue() === 'Grandma Jo', 'names: a tap outside the box keeps her typing');
+  await page.locator('#names-form button[type="submit"]').tap();
+  const shown = await plates();
+  ok(await page.locator('#names-dialog').isHidden() && shown.startsWith('Grandma Jo,') && shown.endsWith(',Barbara,You'), 'names: saved names show on the name boxes, an empty one keeps the usual name: ' + shown);
+  ok(await page.locator('#seats img, #status img, #stage img').count() === 0 && !shown.includes('<'), 'names: a name can never add anything to the screen');
+  ok((await page.locator('#status').textContent()).includes('Grandma Jo') && (await page.locator('.direction strong').textContent()) === 'Grandma Jo', 'names: used everywhere the player is named');
+  ok(JSON.stringify(await state(page)) === before && await namesFit(page) && await fits(page), 'names: the game itself is unchanged, and everything fits');
+  // Kept after closing the app; the menu goes straight to the names from now on.
+  await page.goto(BASE + 'index.html?fast=1');
+  await page.waitForFunction(() => window.__hearts);
+  ok((await plates()).startsWith('Grandma Jo,'), 'names: kept after the app is closed and opened');
+  await page.locator('#menu-button').tap();
+  await page.locator('#menu-names').tap();
+  ok(await page.locator('#names-body input').count() === 3 && await page.locator('#names-body .moon').count() === 0, 'names: after the promise, the menu opens the names directly');
+  await page.locator('#names-usual').tap();
+  await page.locator('#names-form button[type="submit"]').tap();
+  ok(await plates() === 'Michael,Jerry,Barbara,You' && (await settings()).names === null, 'names: "Use the usual names" puts them back');
+  ok(page.errors.length === 0, 'names: no page errors ' + page.errors.join(' | '));
+  await page.close();
+}
+// Ten-letter names in all three languages at the smallest phone, through two hands (Last trick and the results too).
+for (const lang of ['en', 'es', 'vi']) {
+  const ctx = await browser.newContext(phone(375, 667));
+  await ctx.addInitScript(l => localStorage.setItem('claude-hearts-settings-v1', JSON.stringify({ lang: l, speed: 'slow', sound: false, promised: true, names: [null, 'Grandma Jo', 'Aunt Rosie', 'Christophe'] })), lang);
+  const page = await ctx.newPage();
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await page.goto(BASE + 'index.html?fast=1&seed=9');
+  await page.waitForFunction(() => window.__hearts);
+  let problems = 0, lastTrickChecked = false;
+  for (let step = 0; step < 4000; step++) {
+    const s = await state(page);
+    if (!(await fits(page)) || !(await namesFit(page))) problems++;
+    if (s.phase === 'gameEnd' || s.handNo > 2) break;
+    if (s.phase === 'pass') { for (const c of s.hands[0].slice(0, 3)) await page.locator(`#hand [data-card="${c}"]`).tap(); await page.locator('#primary-action').tap(); }
+    else if (s.phase === 'received') await page.locator('#primary-action').tap();
+    else if (s.phase === 'play' && s.turn === 0) {
+      if (!lastTrickChecked && s.trickNo > 0) {
+        await page.locator('#menu-button').tap(); await page.locator('#menu-last').tap();
+        if (!(await namesFit(page))) problems++;
+        await page.locator('#last-dialog [data-close]').tap();
+        lastTrickChecked = true;
+      }
+      const legal = await page.evaluate(() => window.__hearts.rules.legalPlays(window.__hearts.state(), 0));
+      await page.locator(`#hand [data-card="${legal[0]}"]`).tap();
+      if (!(await fits(page))) problems++;
+      await page.locator('#primary-action').tap();
+    } else if (s.phase === 'handEnd') { await page.locator('#end-dialog').waitFor({ state: 'visible' }); await page.locator('#end-next').tap(); }
+    else await page.waitForTimeout(40);
+  }
+  ok(problems === 0 && lastTrickChecked && errs.length === 0, `names ${lang} at 375x667: 10-letter names fit everywhere through two hands (${problems} problems) ${errs.join(' | ')}`);
+  await ctx.close();
+}
+{
+  // The options-page views of the names box never save anything.
+  const page = await newPage(390, 844, '&seed=5');
+  const before = await page.evaluate(() => [localStorage.getItem('claude-hearts-settings-v1'), localStorage.getItem('claude-hearts-game-v1')].join('|'));
+  for (const q of ['demo=follow&show=menu', 'demo=follow&show=promise', 'demo=follow&show=thanks', 'demo=pass&names=Grandma%20Josephine,Aunt%20Rosemary,Riley', 'demo=follow&show=names&field=light', 'demo=follow&show=names&field=plain']) {
+    await page.goto(BASE + 'index.html?' + q);
+    await page.waitForFunction(() => window.__hearts);
+  }
+  await page.locator('#names-form button[type="submit"]').tap();
+  const after = await page.evaluate(() => [localStorage.getItem('claude-hearts-settings-v1'), localStorage.getItem('claude-hearts-game-v1')].join('|'));
+  ok(after === before && page.errors.length === 0, 'names demos never save anything ' + page.errors.join(' | '));
+  await page.close();
+}
+
 await browser.close();
 console.log(`${checks} checks, ${failures} failed.`);
 process.exit(failures ? 1 : 0);

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<style>
+.row { max-width: 1320px; }
+article p { min-height: 104px; }
+section { margin: 40px auto 56px; }
+.head { max-width: 1280px; margin: 0 auto; }
+.head h2.part { margin: 0 0 6px; font: 600 30px/1.15 Georgia, serif; }
+.head p.lead { max-width: 860px; margin: 0; color: #d3dbd5; font-size: 17px; line-height: 1.55; }
+.flow article { width: 300px; }
+.flow article p { min-height: 78px; }
+.flow .phone { width: 302px; height: 651px; border-width: 2px; }
+.flow iframe { transform: scale(0.769); transform-origin: 0 0; }
+</style>
+<title>Hearts - name your opponents (Claude)</title>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Claude Hearts: visual choices for Shawn</div>
+  <h1>Name your opponents</h1>
+  <p class="intro">New in the Menu: "Name your opponents". The first time, it asks for a promise to donate to a school in the player's neighborhood (any school they choose, on trust). After "I promise to donate", the three names can be changed on that phone. Only the names change; the game plays the same. It is live now with my choices below. Two of them are looks, so they are yours to pick.</p>
+</header>
+
+<section>
+  <div class="head">
+    <h2 class="part">What she will see</h2>
+    <p class="lead">Live now, in order. These phones are samples: nothing typed here is saved.</p>
+  </div>
+  <div class="row flow">
+    <article>
+      <div class="eyebrow">Step 1</div>
+      <h2>The Menu</h2>
+      <p>The new button sits under Settings, above "Back to the game".</p>
+      <div class="phone"><iframe title="Menu" src="index.html?demo=follow&amp;show=menu"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Step 2</div>
+      <h2>The promise</h2>
+      <p>Shown until she promises. "Not now" closes it and nothing changes.</p>
+      <div class="phone"><iframe title="The promise" src="index.html?demo=follow&amp;show=promise"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Step 3</div>
+      <h2>The names</h2>
+      <p>A thank-you, then one box per player, labeled by where they sit. After this, the Menu opens the names directly.</p>
+      <div class="phone"><iframe title="The names" src="index.html?demo=follow&amp;show=thanks"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Step 4</div>
+      <h2>At the table</h2>
+      <p>Her names on the name boxes, the status line and the big button, and in every result.</p>
+      <div class="phone"><iframe title="At the table" src="index.html?demo=pass&amp;names=Grandma%20Jo,Aunt%20Rosie,Sam"></iframe></div>
+    </article>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+    <h2 class="part">1. How long a name can be</h2>
+    <p class="lead">Each name box is narrow (about 80 pixels on her phone). "Michael" and "Barbara" just fit at full size. A longer name has to get smaller, or be cut off.</p>
+  </div>
+  <div class="row">
+    <article>
+      <div class="eyebrow">Option 1: my choice (live now)</div>
+      <h2>Up to 10 letters, longer ones shrink</h2>
+      <p>Room for "Grandma Jo" or "Aunt Rosie". The reason: two-word names like these are likely. The cost: on her phone a 10-letter name drops from 18 to 13-15 pixels on the name box and under "Pass to" (12 on a smaller phone).</p>
+      <div class="phone"><iframe title="Up to 10 letters" src="index.html?demo=pass&amp;names=Grandma%20Jo,Aunt%20Rosie,Sam"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 2: without a limit</div>
+      <h2>Any length</h2>
+      <p>What the limit prevents. "Grandma Josephine" shrinks as far as it can and is still cut off on the name box.</p>
+      <div class="phone"><iframe title="Any length" src="index.html?demo=pass&amp;names=Grandma%20Josephine,Aunt%20Rosemary,Sam"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 3: another way</div>
+      <h2>Up to 7 letters, always full size</h2>
+      <p>On her phone every name stays as big as "Michael" is today (18 pixels), easier for her to read. The cost: "Grandma Jo" won't fit; she would type "Grandma" or "Jo".</p>
+      <div class="phone"><iframe title="Up to 7 letters" src="index.html?demo=pass&amp;names=Grandma,Rosie,Sam"></iframe></div>
+    </article>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+    <h2 class="part">2. The boxes she types in</h2>
+    <p class="lead">This is the game's first place to type. Tap a box in any phone to try it.</p>
+  </div>
+  <div class="row">
+    <article>
+      <div class="eyebrow">Option 1: my choice (live now)</div>
+      <h2>Dark, like the buttons</h2>
+      <p>Navy with a gold edge and big white letters (22 pixels, bold), so the boxes match the rest of the game. The edge turns light gold with a glow on the box she is typing in.</p>
+      <div class="phone"><iframe title="Dark boxes" src="index.html?demo=follow&amp;show=names"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 2: without it</div>
+      <h2>The phone's plain box</h2>
+      <p>What a web page gets by default: a thin grey edge and small, regular-weight letters (16 pixels). Hard for her to read.</p>
+      <div class="phone"><iframe title="Plain boxes" src="index.html?demo=follow&amp;show=names&amp;field=plain"></iframe></div>
+    </article>
+    <article>
+      <div class="eyebrow">Option 3: another way</div>
+      <h2>Light, like paper</h2>
+      <p>The same size and gold edge, with dark letters on cream. It looks more like a form to fill in, and stands out from the buttons.</p>
+      <div class="phone"><iframe title="Light boxes" src="index.html?demo=follow&amp;show=names&amp;field=light"></iframe></div>
+    </article>
+  </div>
+</section>
+</body>
+</html>

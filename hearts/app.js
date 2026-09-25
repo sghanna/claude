@@ -35,6 +35,8 @@
   if (params.get('logo') === '0') look.add('no-logo');
   if (params.get('pillborder') === '1') look.add('pill-border');
   if (['now', 'big'].includes(params.get('badge'))) look.add('badge-' + params.get('badge'));
+  // Name your opponents: ?field=light|plain shows the other looks for the name boxes on the options page.
+  if (['light', 'plain'].includes(params.get('field'))) look.add('field-' + params.get('field'));
   if (FAST) FX.setSpeedScale(0.04);
 
   const $ = id => document.getElementById(id);
@@ -43,9 +45,17 @@
     set(k, v) { if (DEMO) return; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode: play without saving */ } }
   };
 
-  let settings = Object.assign({ lang: null, speed: 'slow', sound: false }, store.get(SET_KEY) || {});
+  let settings = Object.assign({ lang: null, speed: 'slow', sound: false, promised: false, names: null }, store.get(SET_KEY) || {});
   if (params.get('lang')) settings.lang = params.get('lang');
   T.set(settings.lang || T.detect());
+
+  // Names she picks for the other players. They go into the screen as HTML, so the characters that could break it
+  // are left out. NAME_MAX keeps a name inside its name box at a size she can read.
+  const NAME_MAX = 10;
+  const cleanName = (text, max = NAME_MAX) => Array.from(String(text || '').replace(/[<>&"]/g, '').replace(/\s+/g, ' ').trim()).slice(0, max).join('').trim();
+  const SEAT_WORD = [null, 'seatLeft', 'seatAcross', 'seatRight'];
+  T.setNames(settings.names);
+  if (DEMO && params.get('names')) T.setNames([null, ...params.get('names').split(',').map(n => cleanName(n, 40))]);   // options pages
 
   const rng = SEED ? H.makeRng(+SEED) : Math.random;
   let st = null, message = null, timers = [];
@@ -373,7 +383,8 @@
         (showHandPts && hp ? `<span class="badge${bump ? ' bump' : ''}" aria-hidden="true">+${hp}</span>` : '') + '</div>';
     }).join('');
     ui.prevPts = st.handPts.slice();
-    $('seats').querySelectorAll('.name, .pts').forEach(el => fitText(el, 18, 13));
+    $('seats').querySelectorAll('.pts').forEach(el => fitText(el, 18, 13));
+    $('seats').querySelectorAll('.name').forEach(el => fitText(el, 18, 12));   // 12: a 10-letter name she picked fits on a 375-wide phone
   }
 
   function cardBox(code, cls, remove) {
@@ -431,6 +442,7 @@
     const bottom = hint || tags.map(t => `<div class="tagcell">${t}</div>`).join('');
     $('stage').innerHTML = top + bottom;
     $('stage').querySelectorAll('.tag').forEach(el => fitText(el, 16, 12));
+    $('stage').querySelectorAll('.direction strong').forEach(el => fitText(el, 18, 13));
   }
 
   function statusHTML() {
@@ -605,6 +617,7 @@
       return `<div><div class="who">${T.name(seat)}</div><div class="card${seat === lt.winner ? ' winner' : ''}" role="img" aria-label="${cap(T.card(p.card))}" style="width:${w}px;height:${h}px">${faceSVG(p.card, w, h)}</div></div>`;
     }).join('') + `</div><p class="note">${T.t('tookIt', { name: T.name(lt.winner) })}</p>`;
     openDialog('last-dialog');
+    $('last-body').querySelectorAll('.who').forEach(el => fitText(el, 16, 12));
   }
 
   function showSettings() {
@@ -617,6 +630,40 @@
     // Language is stored explicitly only once chosen; show the current one as pressed.
     $('settings-body').querySelectorAll('[data-set="lang"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.val === T.lang)));
     openDialog('settings-dialog');
+  }
+
+  // Name your opponents. A thank-you feature: it opens once she promises to donate to a school in her neighborhood
+  // (any school she chooses; nothing is checked). Only the names change, never the game.
+  function showNames(thanks) {
+    const body = $('names-body');
+    if (!settings.promised) {
+      body.innerHTML = `<p>${T.t('promise1')}</p><p>${T.t('promise2')}</p><p>${T.t('promise3')}</p>` +
+        `<button type="button" class="dlg-btn primary-dlg" id="promise-yes">${T.t('promiseYes')}</button>` +
+        `<button type="button" class="dlg-btn" data-close>${T.t('notNow')}</button>`;
+    } else {
+      body.innerHTML = (thanks ? `<p class="moon">${T.t('namesThanks')}</p>` : '') + '<form id="names-form" autocomplete="off">' +
+        [1, 2, 3].map(seat => `<label class="name-field"><span>${T.t(SEAT_WORD[seat])}</span>` +
+          `<input type="text" data-seat="${seat}" value="${T.name(seat)}" placeholder="${T.defaultName(seat)}" maxlength="${NAME_MAX}"` +
+          ` autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="${seat < 3 ? 'next' : 'done'}"></label>`).join('') +
+        `<p class="note">${T.t('namesNote', { n: NAME_MAX })}</p>` +
+        `<button type="submit" class="dlg-btn primary-dlg">${T.t('saveNames')}</button>` +
+        `<button type="button" class="dlg-btn" id="names-usual">${T.t('usualNames')}</button>` +
+        `<button type="button" class="dlg-btn" data-close>${T.t('cancel')}</button></form>`;
+    }
+    openDialog('names-dialog');
+  }
+
+  function saveNames() {
+    const names = [null];
+    $('names-body').querySelectorAll('input[data-seat]').forEach(input => {
+      const seat = +input.dataset.seat, name = cleanName(input.value);
+      names[seat] = name && name !== T.defaultName(seat) ? name : null;   // empty or unchanged: the usual name
+    });
+    settings.names = names.some(Boolean) ? names : null;
+    store.set(SET_KEY, settings);
+    T.setNames(settings.names);
+    closeDialogs(true);
+    render();
   }
 
   function applyLanguage() {
@@ -633,8 +680,10 @@
   // if it lifts on that button or close to it (SLIDE px), however long it was held. Safari drops the click after a
   // long hold or a slide, so send one ourselves then, and ignore Safari's own click if it comes as well.
   const SLIDE = 44;
-  document.addEventListener('selectstart', e => e.preventDefault());
-  document.addEventListener('contextmenu', e => e.preventDefault());
+  // The name fields are the one exception: typing needs a caret, and she may want to paste a name.
+  const inField = e => { const t = e.target && e.target.nodeType === 1 ? e.target : e.target && e.target.parentElement; return !!(t && t.closest && t.closest('input')); };
+  document.addEventListener('selectstart', e => { if (!inField(e)) e.preventDefault(); });
+  document.addEventListener('contextmenu', e => { if (!inField(e)) e.preventDefault(); });
   let press = null, sent = null;
   document.addEventListener('pointerdown', e => {
     sent = null;   // a new press: Safari's click for the last one, if it was coming, has already come
@@ -669,6 +718,19 @@
   $('menu-last').addEventListener('click', showLastTrick);
   $('menu-scores').addEventListener('click', showScores);
   $('menu-settings').addEventListener('click', showSettings);
+  $('menu-names').addEventListener('click', () => showNames(false));
+  $('names-body').addEventListener('click', e => {
+    if (e.target.closest('#promise-yes')) { settings.promised = true; store.set(SET_KEY, settings); showNames(true); }
+    else if (e.target.closest('#names-usual')) $('names-body').querySelectorAll('input[data-seat]').forEach(i => { i.value = T.defaultName(+i.dataset.seat); });
+    else if (e.target.closest('[data-close]')) closeDialogs();
+  });
+  $('names-body').addEventListener('submit', e => { e.preventDefault(); saveNames(); });
+  $('names-body').addEventListener('keydown', e => {   // Next on the keyboard goes to the next name; Done on the last one saves
+    const input = e.target.closest('input[data-seat]');
+    if (e.key !== 'Enter' || !input || input.dataset.seat === '3') return;
+    e.preventDefault();
+    $('names-body').querySelector(`input[data-seat="${+input.dataset.seat + 1}"]`).focus();
+  });
   $('new-game').addEventListener('click', () => openDialog('new-dialog'));
   $('confirm-new').addEventListener('click', () => { closeDialogs(true); startNewGame(); });
   $('end-next').addEventListener('click', () => {
@@ -688,7 +750,8 @@
     showSettings();
   });
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeDialogs()));
-  document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) closeDialogs(); }));
+  // A tap outside a box closes it, except the names box: a tap there to put the keyboard away would lose her typing.
+  document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o && o.id !== 'names-dialog') closeDialogs(); }));
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDialogs(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimers(); save(); } else schedule(); });
   window.addEventListener('pagehide', save);
@@ -705,6 +768,7 @@
   function runDemo(kind) {
     const r = H.makeRng(12);
     st = H.newGame(r);
+    if (kind === 'pass') return render();   // the start of a hand: "Pass to" a name
     if (kind === 'received') {   // the 3 passed cards are on the table, waiting for Continue
       H.applyPasses(st, [0, 1, 2, 3].map(i => H.aiPass(st.hands[i])));
       return render();
@@ -751,7 +815,15 @@
 
   /* ---------------- Start ---------------- */
   applyLanguage();
-  if (DEMO) { runDemo(DEMO); return; }
+  if (DEMO) {
+    runDemo(DEMO);
+    // Options pages: open the menu or the names box. Nothing here is saved (demo mode).
+    const show = params.get('show');
+    if (show === 'menu') openDialog('menu-dialog');
+    else if (show === 'promise') showNames(false);
+    else if (show === 'names' || show === 'thanks') { settings.promised = true; showNames(show === 'thanks'); }
+    return;
+  }
   const couldNotRestore = load();
   commit();
   if (couldNotRestore) { $('last-body').innerHTML = `<p>${T.t('restoreFail')}</p>`; $('last-title').textContent = T.t('title'); openDialog('last-dialog'); }

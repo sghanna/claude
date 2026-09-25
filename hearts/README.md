@@ -21,7 +21,7 @@ Then open http://127.0.0.1:8767/hearts/. For a phone-sized view in Chrome or Saf
 - **Tapping.** Tap a card to choose it and tap again to put it back. Nothing is passed or played until she presses the big button. Tapping a card she can't play shows the reason ("You must follow clubs.") instead of selecting it, with two short buzzes. A long hold counts as a tap, and so does a press that slides up to 44 px off a card or button before lifting. Nothing on screen can be selected as text, and a double tap never zooms.
 - **Pace.** No timers. Computer players move every 1.3 s on Slow (the default) or 0.8 s on Normal. A finished trick stays on the table for 3.8 s (or 2.4 s), and "Next trick" skips the wait.
 - **End of each hand.** A results panel shows this hand's points and the totals, and names the next pass direction. After the last hand, a game-over panel shows the winner, with "Play again".
-- **Menu.** Last trick, Scores, How to play, Settings (speed, sound, language), and Back to the game. "Start a new game" sits below a gap and asks first.
+- **Menu.** Last trick, Scores, How to play, Settings (speed, sound, language), Name your opponents, and Back to the game. "Start a new game" sits below a gap and asks first.
 - **Saving.** Saves after every action. Closing the app or losing power mid-hand resumes exactly where she was. A damaged save is detected, explained, and replaced with a new game.
 - **Works offline** after the first visit, and can be added to the Home Screen as an app (icon, name "Hearts", full screen).
 - **English, Spanish, Vietnamese.** Chosen automatically from the phone's language, changeable in Settings, or via `?lang=es` / `?lang=vi`. **The Spanish and Vietnamese are Claude's own translations and need a native speaker to check them.**
@@ -55,10 +55,22 @@ Shawn's picks (Sept 24, live, cache v9), from https://sghanna.github.io/claude/h
 - Top of the screen: the logo beside the title, Help and Menu without the gold border, and the biggest points badge (24 px) above each name (`?logo=0`, `?pillborder=1`, `?badge=now|big` show the others).
 - The not-allowed sound: Marimba, two wooden notes going down (`nopeMarimba`), Shawn's pick of six on https://sghanna.github.io/claude/hearts/options-nope.html (`?nopesound=nope|nopeMarimba|nopeNuh|nopeKnock|nopeSlide|nopeBuzz`, volumes matched by measurement). Plays only with Sound on and the phone not on silent.
 
-## Tested (Sept 23-24, 2026)
+## Name your opponents (Sept 25, 2026)
+
+Shawn's request: players can pick their own names for the three computer players. He framed it as a paid feature that doesn't change the game, paid for with a promise to donate to a school in the player's neighborhood.
+
+- **Menu, then "Name your opponents".** The first time, it explains the deal: give the other players any names you like; the game stays the same; please donate to a school in your neighborhood, any school you choose; there is nothing to pay here, and we trust you to do it. Buttons: "I promise to donate" and "Not now".
+- **After the promise** (kept on that phone, nothing checked), a thank-you line and one box per player, labeled "On your left", "Across from you" and "On your right". Up to 10 letters each. An empty box keeps the usual name. "Use the usual names" fills the boxes with Michael, Jerry and Barbara again; nothing changes until "Save names". From then on the Menu opens the names directly.
+- **Only the names change.** They show on the name boxes, the status line, the big button, Last trick, Scores and the results, in every language ("You" still translates). Game state, scores and stats are untouched.
+- **Details:** the boxes are the only place in the game that allows text selection (typing needs a caret). The box sits near the top of the screen so the keyboard doesn't cover it, and a tap outside it doesn't close it (that tap is how you put the keyboard away). Next on the keyboard moves to the next name, Done saves. Characters that could break the screen (`< > & "`) are dropped. A long name shrinks to fit its name box (down to 12 px); in Last trick a two-word name can take two lines.
+- **Fix found on the way:** the name boxes, the table under them and the Last trick box used a grid that let a long word widen its column, pushing "You" off the right edge. They now shrink the name instead. Nothing changes for the usual names.
+
+Options page (Shawn's visual choice): https://sghanna.github.io/claude/hearts/options-names.html. It shows the four steps, then two judgment calls, each with Claude's choice, what happens without it, and one other way: how long a name can be (`?names=A,B,C` on a demo shows any names; 10 letters is live, 7 letters keeps every name at full size) and the look of the boxes she types in (dark, live; `?field=plain`, `?field=light`). `?show=menu|promise|names|thanks` opens those views on a demo page, and `?demo=pass` shows the start of a hand. Demo pages never save.
+
+## Tested (Sept 23-25, 2026)
 
 - `node hearts/tests/rules.test.mjs 5000` (from ~/claude): 30 rule checks plus 5,000 simulated games (54,865 hands, 713,245 tricks). Every play was legal, no card was ever lost or duplicated, every hand scored 26 (or 78 when someone shot the moon), and every game ended. All passed.
-- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 87 checks, all passed, in WebKit (Safari's engine). They cover:
+- `node hearts/tests/ui.test.mjs http://127.0.0.1:8767/hearts/ 2`: 107 checks, all passed, in WebKit (Safari's engine). They cover:
   - 3 complete games played through real taps, with no text overflow or scrolling at any step,
   - illegal taps explained,
   - save and restore mid-hand, and a damaged save,
@@ -67,12 +79,13 @@ Shawn's picks (Sept 24, live, cache v9), from https://sghanna.github.io/claude/h
   - 13 cards on screen with 44 px or larger targets at 390 x 844, 390 x 763, 390 x 740 and 375 x 667,
   - a full game with motion and sound on (nothing stalls, stats recorded exactly once, celebrations clean up),
   - the options-page demos, which never touch the real saved game,
-  - long holds and slides counted as exactly one tap, no text selection, the passed cards flying into her hand, the shake and hop, and the logo and bigger badges fitting in all 3 languages without covering names.
+  - long holds and slides counted as exactly one tap, no text selection, the passed cards flying into her hand, the shake and hop, and the logo and bigger badges fitting in all 3 languages without covering names,
+  - Name your opponents: the promise comes first and "Not now" changes nothing; the promise opens the names; names show everywhere, survive closing the app, and never change the game; an empty box keeps the usual name; "Use the usual names" works; Next moves to the next box; a tap outside keeps her typing; a name can't add anything to the screen; 10-letter names fit everywhere in all 3 languages at 375 x 667 through two hands, Last trick included; the options-page views never save.
 - Every animation and celebration was also captured mid-motion (slowed 15x) and checked by eye, including the Reduce Motion version.
 - Offline play was checked in Chromium, because Playwright's WebKit can't reload any page while offline.
 - Screenshots of every stage of a game were checked by eye in all three languages.
 
-**Not tested:** a real iPhone, airplane mode on a real iPhone, and VoiceOver. Mom played it on Sept 24; the changes from that playtest are above. On her phone, check: a long press and a slide off the Play button each count as one tap, a tap on a card she can't play buzzes twice (iOS 18+), the three passed cards glide into her hand, and whether Slow is slow enough.
+**Not tested:** a real iPhone, airplane mode on a real iPhone, and VoiceOver. Mom played it on Sept 24; the changes from that playtest are above. On her phone, check: typing names with the iPhone keyboard up (not testable on a Mac), a long press and a slide off the Play button each count as one tap, a tap on a card she can't play buzzes twice (iOS 18+), the three passed cards glide into her hand, and whether Slow is slow enough.
 
 ## Not done
 
