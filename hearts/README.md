@@ -72,7 +72,7 @@ Shawn's picks (Sept 24, live, cache v9), from https://sghanna.github.io/claude/h
 - Offline play was checked in Chromium, because Playwright's WebKit can't reload any page while offline.
 - Screenshots of every stage of a game were checked by eye in all three languages.
 
-**Not tested:** a real iPhone, airplane mode on a real iPhone, VoiceOver, and Mom. On her phone, check: text size and contrast, whether Slow is slow enough, and whether she understands the gold outline and the "+3" badges.
+**Not tested:** a real iPhone, airplane mode on a real iPhone, and VoiceOver. Mom played it on Sept 24; the changes from that playtest are above. On her phone, check: a long press and a slide off the Play button each count as one tap, a tap on a card she can't play buzzes twice (iOS 18+), the three passed cards glide into her hand, and whether Slow is slow enough.
 
 ## Not done
 
