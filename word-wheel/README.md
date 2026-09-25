@@ -29,9 +29,11 @@ To put it on an iPhone: open the link in Safari, tap Share, then **Add to Home S
 
 Words come from **SCOWL** (Kevin Atkinson and contributors; copyright and permission notice in `tools/sources/SCOWL-Copyright`), minus the **List of Dirty, Naughty, Obscene, and Otherwise Bad Words** (LDNOOBW, CC BY 4.0). Grid answers come only from SCOWL's most common lists (sizes 10 and 20 for levels 1-60, plus 35 after that). Bonus words come from a much larger list (up to size 60), so a real word is rarely turned down.
 
-An editor's review of all 17,782 possible answers, plus a second pass over the 3,063 words the levels actually use, removed 1,023 words from the grid. They are listed with reasons in `tools/removed-words.txt`:
-- **block** (39 words): slurs, sexual, crude or drug words. Never shown, never accepted.
-- **nogrid** (984 words): grim words (death, weapons, disease), odd forms (HES, MYS, PIS), archaic, British-only or obscure words, jargon and clipped slang. These are never grid answers but are still accepted as bonus words.
+An editor's review of all 17,782 possible answers, plus a second pass over the 3,063 words the levels actually use, removed 956 words from the grid. They are listed with reasons in `tools/removed-words.txt`:
+- **block** (38 words): slurs, sexual, crude or drug words. Never shown, never accepted.
+- **nogrid** (918 words): grim words (death, disease), odd forms (HES, MYS, PIS), archaic, British-only or obscure words, jargon and clipped slang. These are never grid answers but are still accepted as bonus words.
+
+On Sept 25 Shawn put the weapon words (gun, knife, sword, bullet, bomb and their forms) back in, along with THY, WHILST, BITMAP, HAG and DIKE (a dam, too).
 
 Details: `tools/WORDS.md`.
 
@@ -55,7 +57,8 @@ Details: `tools/WORDS.md`.
 ## Visual choices (for Shawn)
 
 - https://sghanna.github.io/claude/word-wheel/options-look.html: three looks (felt, live now; light; scenery) with measured contrast. `?look=light` or `?look=scenery` previews one; ship a pick by changing `DEFAULT_LOOK` in app.js.
-- https://sghanna.github.io/claude/word-wheel/options-icon.html: three icons at Home Screen size next to Solitaire and Hearts. Live now: the CAT tiles.
+- https://sghanna.github.io/claude/word-wheel/options-icon.html: three icons at Home Screen size next to Solitaire and Hearts. Shawn picked the six-letter wheel (Sept 25).
+- https://sghanna.github.io/claude/word-wheel/options-icon-word.html: that wheel with the swipe path spelling out the word. Live now: W-O-R-D.
 
 ## Publishing a change
 

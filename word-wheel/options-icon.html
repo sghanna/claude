@@ -33,7 +33,7 @@ const DEFS = `<defs><radialGradient id="felt" cx="50%" cy="40%" r="75%"><stop of
 const FONT = 'font-family="-apple-system, Helvetica, Arial, sans-serif" font-weight="800" text-anchor="middle"';
 const svg = body => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">${DEFS}<rect width="512" height="512" fill="url(#felt)"/>${body}</svg>`);
 
-// Option 1: the level 1 grid, CAT across and ACT down, as big ivory tiles (also saved as icon.svg and the icon PNGs).
+// Option 1: the level 1 grid, CAT across and ACT down, as big ivory tiles (saved as icon-options/cat-tiles.svg).
 function tile(x, y, ch) {
   return `<rect x="${x + 5}" y="${y + 9}" width="138" height="138" rx="22" fill="#000" opacity=".4"/>` +
     `<rect x="${x}" y="${y}" width="138" height="138" rx="22" fill="#fffaf0" stroke="#fbbf24" stroke-width="9"/>` +
@@ -50,8 +50,8 @@ const big3 = `<circle cx="256" cy="256" r="214" fill="url(#disc)" stroke="#fbbf2
   `<circle cx="367" cy="320" r="84" fill="#0f172a"/><text x="367" y="359" fill="#fff7df">T</text></g>`;
 
 const OPTIONS = [
-  ['Option 1 (my choice, live now): CAT tiles', 'The first puzzle she will solve, CAT across and ACT down, as five big ivory tiles. The largest letters of the three, and it reads as a crossword. My reason: at 60 points one big shape beats many small letters.', 'icon-512.png'],
-  ['Option 2: six-letter wheel', 'The first icon, made with the game: the wheel with W O R D S E and a swipe through W-O-R. It looks most like the game screen, but six letters are small at this size.', 'icon-options/wheel6.svg'],
+  ['Option 1 (my first choice): CAT tiles', 'The first puzzle she will solve, CAT across and ACT down, as five big ivory tiles. The largest letters of the three, and it reads as a crossword. My reason: at 60 points one big shape beats many small letters.', 'icon-options/cat-tiles.svg'],
+  ['Option 2 (your pick, Sept 25): six-letter wheel', 'The first icon, made with the game: the wheel with W O R D S E and a swipe through W-O-R. It looks most like the game screen, but six letters are small at this size. Live now with the path spelling WORD: see options-icon-word.html.', 'icon-options/wheel6.svg'],
   ['Option 3: three-letter wheel', 'The wheel with just C, A, T, each letter much bigger than in option 2, and the swipe path through all three.', svg(big3)]
 ];
 

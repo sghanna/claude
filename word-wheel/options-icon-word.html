@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<style>
+article { width: 380px; }
+article p { min-height: 80px; }
+.big { display: block; width: 180px; height: 180px; border-radius: 40px; margin: 6px 0 14px; box-shadow: 0 10px 26px #000a; }
+.home { display: flex; gap: 22px; padding: 16px 20px; border-radius: 22px; margin: 0 0 12px; }
+.home.dark { background: linear-gradient(160deg, #1f2d4d, #0b1020); }
+.home.light { background: linear-gradient(160deg, #f3efe6, #c9d6e3); }
+.app { width: 60px; text-align: center; font: 500 12px -apple-system, BlinkMacSystemFont, sans-serif; }
+.app img { display: block; width: 60px; height: 60px; border-radius: 13.5px; margin-bottom: 5px; }
+.dark .app { color: #fff; }
+.light .app { color: #111; }
+</style>
+<title>Word Wheel - six-letter icon, word spelled out (Claude)</title>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Word Wheel: a visual choice for Shawn</div>
+  <h1>Six-letter wheel, word spelled out</h1>
+  <p class="intro">Your pick from the icon page (the six-letter wheel), with the swipe path spelling out the word. Option 1 is live now. Each is shown next to her Solitaire and Hearts icons at real Home Screen size.</p>
+</header>
+<main class="row" id="options"></main>
+<script>
+const HEARTS = '../hearts/icon-180.png';
+const SOLITAIRE = 'https://sghanna.github.io/mom-games/solitaire/icons/icon-180.png';
+// The six letters in wheel order, clockwise from the top.
+const SPOTS = { W: [256, 120], O: [374, 188], R: [374, 324], D: [256, 392], S: [138, 324], E: [138, 188] };
+
+function wheelIcon(path) {
+  const pts = [...path].map(ch => SPOTS[ch].join(',')).join(' ');
+  const letters = Object.entries(SPOTS).map(([ch, [x, y]]) => path.includes(ch)
+    ? `<circle cx="${x}" cy="${y}" r="50" fill="#0f172a"/><text x="${x}" y="${y + 23}" fill="#fff7df">${ch}</text>`
+    : `<circle cx="${x}" cy="${y}" r="50" fill="#fffaf0" stroke="#8b6f2e" stroke-width="5"/><text x="${x}" y="${y + 23}" fill="#1b1208">${ch}</text>`).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><defs>` +
+    `<radialGradient id="felt" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#1f5238"/><stop offset="0.55" stop-color="#0f2c1f"/><stop offset="1" stop-color="#05130d"/></radialGradient>` +
+    `<radialGradient id="disc" cx="45%" cy="40%" r="65%"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#eadfbf"/></radialGradient></defs>` +
+    `<rect width="512" height="512" fill="url(#felt)"/><circle cx="256" cy="256" r="196" fill="url(#disc)" stroke="#fbbf24" stroke-width="16"/>` +
+    `<polyline points="${pts}" fill="none" stroke="#fbbf24" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<polyline points="${pts}" fill="none" stroke="#0f172a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<g font-family="-apple-system, Helvetica, Arial, sans-serif" font-weight="800" font-size="66" text-anchor="middle">${letters}</g></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+const OPTIONS = [
+  ['Option 1 (my choice, live now): W-O-R-D', 'The swipe path runs through W, O, R and D, so the chosen letters spell WORD. My reason: you asked for "word" spelled out, and this is that word exactly.', wheelIcon('WORD')],
+  ['Option 2: without it (as before)', 'The original six-letter icon: the path stops at W-O-R, so the word is not finished.', wheelIcon('WOR')],
+  ['Option 3: W-O-R-D-S', 'The path goes one letter further to spell WORDS, leaving only E unchosen.', wheelIcon('WORDS')]
+];
+
+document.getElementById('options').innerHTML = OPTIONS.map(([title, text, src]) => `
+  <article>
+    <h2>${title}</h2>
+    <p>${text}</p>
+    <img class="big" src="${src}" alt="">
+    ${['dark', 'light'].map(w => `<div class="home ${w}">
+      <div class="app"><img src="${SOLITAIRE}" alt="">Solitaire</div>
+      <div class="app"><img src="${HEARTS}" alt="">Hearts</div>
+      <div class="app"><img src="${src}" alt="">Word Wheel</div>
+    </div>`).join('')}
+  </article>`).join('');
+</script>
+</body>
+</html>

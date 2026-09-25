@@ -38,7 +38,6 @@ baddest	nogrid	nonstandard slang superlative form
 bani	nogrid	obscure foreign currency term
 bawdier	nogrid	mildly vulgar suggestive term
 bawdy	nogrid	mildly vulgar suggestive term
-bayonet	nogrid	military weapon, violence related
 beeves	nogrid	archaic obscure plural form
 behead	nogrid	violent execution related
 beheads	nogrid	violent execution related
@@ -53,20 +52,12 @@ bigotry	nogrid	heavy social topic, prejudice
 bigots	nogrid	heavy social topic, prejudice
 birched	nogrid	obscure corporal punishment term
 bitched	block	crude vulgar slang term
-bitmap	nogrid	computer jargon, coordinator pass
 blither	nogrid	awkward rare comparative form
 bloods	nogrid	awkward plural of mass noun
 bloody	nogrid	gory or British swear, coordinator pass
 bobs	nogrid	odd form, coordinator pass
 bodice	nogrid	obscure romance novel clothing term
 bodices	nogrid	obscure romance novel clothing term
-bomb	nogrid	weapon and violence topic
-bombard	nogrid	violence related term
-bombed	nogrid	violent, coordinator pass
-bomber	nogrid	weapon and violence topic
-bombers	nogrid	weapon and violence topic
-bombing	nogrid	weapon and violence topic
-bombs	nogrid	weapon and violence topic
 booby	nogrid	mild vulgar double meaning
 booze	nogrid	informal slang term for alcohol
 bra	nogrid	underwear, coordinator pass
@@ -76,8 +67,6 @@ brawled	nogrid	violence, fighting related
 brawls	nogrid	violence, fighting related
 bugger	nogrid	mild British vulgar slang term
 buggers	nogrid	mild British vulgar slang term
-bullet	nogrid	weapon and violence topic
-bullets	nogrid	weapon and violence topic
 bum	nogrid	mildly vulgar, coordinator pass
 bummest	nogrid	awkward nonstandard superlative form
 burial	nogrid	death and funeral related
@@ -160,8 +149,6 @@ cyclone	nogrid	natural disaster topic
 cyst	nogrid	gross medical term
 cysts	nogrid	gross medical term
 daemon	nogrid	obscure technical or mythological term
-dagger	nogrid	weapon, violence related
-daggers	nogrid	weapon, violence related
 damn	nogrid	mild profanity
 damned	nogrid	mild profanity
 damning	nogrid	mild profanity
@@ -190,7 +177,6 @@ dialog	nogrid	jargon spelling, coordinator pass
 die	nogrid	death related, per house standard
 died	nogrid	death related, per house standard
 dies	nogrid	death related, per house standard
-dike	block	slur spelling, coordinator pass
 dirge	nogrid	funeral and death related
 dirges	nogrid	funeral and death related
 disease	nogrid	serious illness topic, grim
@@ -337,7 +323,6 @@ gout	nogrid	obscure medical condition term
 grave	nogrid	death and burial related
 graved	nogrid	obscure archaic verb form
 graves	nogrid	death and burial related
-grenade	nogrid	weapon, violence related
 grief	nogrid	grief and loss related
 griefs	nogrid	grief and loss related
 grieve	nogrid	grief and loss related
@@ -348,18 +333,7 @@ groped	nogrid	sexual harassment related, mature
 gropes	nogrid	sexual harassment related, mature
 groping	nogrid	sexual harassment related, mature
 guinea	nogrid	proper noun, coordinator pass
-gun	nogrid	weapon and violence topic
-gunfire	nogrid	weapon and violence topic
-gunman	nogrid	weapon and violence topic
-gunmen	nogrid	weapon and violence topic
-gunned	nogrid	weapon and violence topic
-gunner	nogrid	weapon and violence topic
-gunners	nogrid	weapon and violence topic
-gunning	nogrid	weapon and violence topic
-guns	nogrid	weapon and violence topic
-gunshot	nogrid	weapon and violence topic
 hackney	nogrid	obscure British term
-hag	nogrid	insult to older women, coordinator pass
 halon	nogrid	obscure technical chemical term
 hanged	nogrid	execution and death related
 harass	nogrid	heavy social topic, harassment
@@ -367,7 +341,6 @@ harem	nogrid	adult historical connotation
 harems	nogrid	adult historical connotation
 harlot	nogrid	archaic derogatory term
 harlots	nogrid	archaic derogatory term
-harpoon	nogrid	weapon, violence related
 hart	nogrid	obscure archaic vocabulary word
 hazing	nogrid	heavy topic, harmful ritual
 hearse	nogrid	death and funeral related
@@ -430,10 +403,6 @@ kills	nogrid	violence related, per house standard
 kinda	nogrid	informal clipped slang term
 kinkier	nogrid	sexual connotation, adult topic
 knacker	nogrid	obscure British slang term
-knife	nogrid	weapon and violence topic
-knifed	nogrid	weapon and violence topic
-knifes	nogrid	weapon and violence topic
-knifing	nogrid	weapon and violence topic
 kowtow	nogrid	obscure vocabulary word
 kowtows	nogrid	obscure vocabulary word
 lade	nogrid	archaic, coordinator pass
@@ -441,10 +410,6 @@ laggard	nogrid	obscure advanced vocabulary word
 lambda	nogrid	obscure technical term
 lament	nogrid	grief related vocabulary
 laments	nogrid	grief related vocabulary
-lance	nogrid	weapon and medical piercing term
-lanced	nogrid	weapon and medical piercing term
-lances	nogrid	weapon and medical piercing term
-lancing	nogrid	weapon and medical piercing term
 languor	nogrid	obscure advanced vocabulary word
 larceny	nogrid	crime related, obscure legal term
 latrine	nogrid	obscure bathroom related term
@@ -485,10 +450,6 @@ lynch	nogrid	violent historical racial injustice topic
 lynched	nogrid	violent historical racial injustice topic
 lynches	nogrid	violent historical racial injustice topic
 macabre	nogrid	obscure vocabulary, grim connotation
-mace	nogrid	weapon related term
-maced	nogrid	weapon related term
-maces	nogrid	weapon related term
-machete	nogrid	weapon, violence related
 maggot	nogrid	gross pest term, associated with decay
 maggots	nogrid	gross pest term, associated with decay
 maim	nogrid	violent injury, disfigurement related
@@ -524,7 +485,6 @@ midgets	block	disability slur term
 mien	nogrid	obscure archaic vocabulary word
 miens	nogrid	obscure archaic vocabulary word
 mirth	nogrid	obscure advanced vocabulary word
-missile	nogrid	weapon and violence topic
 missive	nogrid	obscure archaic vocabulary word
 mod	nogrid	clipped slang, coordinator pass
 modicum	nogrid	obscure advanced vocabulary word
@@ -547,14 +507,10 @@ muggers	nogrid	crime, robbery related, grim
 mugging	nogrid	crime, robbery related, grim
 murder	nogrid	death related, per house standard
 murders	nogrid	death related, per house standard
-musket	nogrid	weapon, historical violence related
-muskets	nogrid	weapon, historical violence related
 muter	nogrid	awkward comparative, coordinator pass
 mutiny	nogrid	violence, historical rebellion topic
 mys	nogrid	odd plural, coordinator pass
 naked	nogrid	body, coordinator pass
-napalm	nogrid	weapon, warfare related, grim
-napalms	nogrid	weapon, warfare related, grim
 nappies	nogrid	British term, sensitive usage
 nappy	nogrid	British term, sensitive usage
 nays	nogrid	odd plural, coordinator pass
@@ -618,8 +574,6 @@ pillage	nogrid	violence, war related, grim
 pinion	nogrid	obscure technical mechanical term
 pinions	nogrid	obscure technical mechanical term
 pis	nogrid	letter name plural, coordinator pass
-pistol	nogrid	weapon, violence related
-pistols	nogrid	weapon, violence related
 piteous	nogrid	obscure advanced vocabulary word
 plague	nogrid	serious disease, disaster, grim
 plagued	nogrid	serious disease, disaster, grim
@@ -724,9 +678,6 @@ revs	nogrid	clipped, coordinator pass
 riced	nogrid	awkward form, coordinator pass
 rifer	nogrid	awkward rare comparative form
 rifest	nogrid	awkward rare superlative form
-rifle	nogrid	weapon, violence related
-rifled	nogrid	weapon, violence related
-rifles	nogrid	weapon, violence related
 riot	nogrid	violence, civil unrest related
 rioted	nogrid	violence, civil unrest related
 rioter	nogrid	violence, civil unrest related
@@ -787,7 +738,6 @@ sexing	nogrid	adult sexual connotation, ambiguous
 sexism	nogrid	heavy social topic, discrimination
 sexist	nogrid	heavy social topic, discrimination
 shackle	nogrid	restraint device, grim historical
-shotgun	nogrid	weapon, violence related
 shrew	nogrid	dated sexist insult connotation
 shrews	nogrid	dated sexist insult connotation
 shroud	nogrid	death and funeral related
@@ -834,12 +784,6 @@ smites	nogrid	archaic violent biblical term
 smiting	nogrid	archaic violent biblical term
 smote	nogrid	archaic violent biblical term
 smuts	nogrid	obscene material connotation
-snipe	nogrid	weapon, violence related
-sniped	nogrid	weapon, violence related
-sniper	nogrid	weapon, violence related
-snipers	nogrid	weapon, violence related
-snipes	nogrid	weapon, violence related
-sniping	nogrid	weapon, violence related
 snot	nogrid	mild vulgarity, gross bodily term
 snots	nogrid	mild vulgarity, gross bodily term
 sod	nogrid	British slang sense, coordinator pass
@@ -852,9 +796,6 @@ spank	nogrid	corporal punishment connotation
 spanked	nogrid	corporal punishment connotation
 spanks	nogrid	corporal punishment connotation
 spanner	nogrid	British only term for wrench
-spear	nogrid	weapon, violence related
-speared	nogrid	weapon, violence related
-spears	nogrid	weapon, violence related
 specter	nogrid	ghost, ominous connotation
 sperm	nogrid	reproductive anatomy, mature topic
 sperms	nogrid	reproductive anatomy, mature topic
@@ -888,8 +829,6 @@ swarthy	nogrid	obscure term, sensitive descriptor
 swathe	nogrid	obscure advanced vocabulary word
 swathed	nogrid	obscure advanced vocabulary word
 swathes	nogrid	obscure advanced vocabulary word
-sword	nogrid	weapon, violence related
-swords	nogrid	weapon, violence related
 tawdry	nogrid	obscure vocabulary, morally negative
 teared	nogrid	awkward form, coordinator pass
 teat	nogrid	anatomical term, mildly indelicate
@@ -908,7 +847,6 @@ thou	nogrid	archaic, coordinator pass
 thrash	nogrid	violence connotation
 thug	nogrid	crime, violence related term
 thugs	nogrid	crime, violence related term
-thy	nogrid	archaic, coordinator pass
 tided	nogrid	awkward form, coordinator pass
 ting	nogrid	sound word, coordinator pass
 tinned	nogrid	British, coordinator pass
@@ -921,7 +859,6 @@ tombing	nogrid	death and burial related
 tombs	nogrid	death and burial related
 torment	nogrid	suffering connotation, grim topic
 tornado	nogrid	natural disaster topic
-torpedo	nogrid	weapon, violence related
 torrid	nogrid	adult romantic connotation
 torture	nogrid	violence, torture related, grim
 trample	nogrid	violence, injury connotation
@@ -995,17 +932,13 @@ wannest	nogrid	obscure superlative form
 wanton	nogrid	archaic sexual moral connotation
 wantons	nogrid	archaic sexual moral connotation
 warfare	nogrid	violence, war related topic
-warhead	nogrid	weapon, violence related
 warlike	nogrid	violence connotation
 warpath	nogrid	violence connotation, insensitive origin
-weapon	nogrid	weapon and violence topic
-weapons	nogrid	weapon and violence topic
 wee	nogrid	bathroom slang sense, coordinator pass
 wees	nogrid	bathroom slang sense, coordinator pass
 weest	nogrid	obscure archaic superlative form
 welter	nogrid	obscure advanced vocabulary word
 welters	nogrid	obscure advanced vocabulary word
-whilst	nogrid	British, coordinator pass
 whores	block	crude sexual insult term
 winsome	nogrid	obscure advanced vocabulary word
 wiz	nogrid	clipped slang, coordinator pass
