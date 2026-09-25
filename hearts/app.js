@@ -35,9 +35,9 @@
   if (params.get('logo') === '0') look.add('no-logo');
   if (params.get('pillborder') === '1') look.add('pill-border');
   if (['now', 'big'].includes(params.get('badge'))) look.add('badge-' + params.get('badge'));
-  // Name boxes: light, Shawn's pick (Sept 25, 2026). ?field=dark|plain shows the others on the options page.
-  // Shawn's idea (Sept 25): ?field=swap, dark boxes until one is being typed in, then that box turns light.
-  if (['dark', 'plain', 'swap'].includes(params.get('field'))) look.add('field-' + params.get('field'));
+  // Name boxes: dark like the buttons, and the one she is typing in turns light with a gold ring (Shawn's idea and pick,
+  // Sept 25, 2026). Options pages: ?field=light (his earlier pick), dark, plain; swap is the live look.
+  if (['light', 'dark', 'plain', 'swap'].includes(params.get('field'))) look.add('field-' + params.get('field'));
   // Shawn removed the Help button from the top bar (Sept 25, 2026): the rules are in Menu, How to play, and the logo and title
   // sit on the left. ?help=1 shows the old top bar (Help, centered title) and ?howto=0 hides the Menu item, for older options pages.
   if (params.get('help') === '1') look.add('with-help');

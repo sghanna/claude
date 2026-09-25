@@ -424,7 +424,7 @@ const namesFit = page => page.evaluate(() => [...document.querySelectorAll('.pla
   ok((await settings()).promised === true && (await page.locator('#names-body .moon').textContent()).includes('Thank you'), 'names: the promise turns it on, with a thank-you');
   ok(await page.$$eval('#names-body input', els => els.map(e => e.value).join()) === 'Michael,Jerry,Barbara', 'names: the fields start with the current names');
   ok(await page.$eval('#names-body input', el => getComputedStyle(el).webkitUserSelect) === 'text', 'names: the fields take typing');
-  ok(await page.$eval('#names-body input', el => getComputedStyle(el).backgroundColor) === 'rgb(255, 253, 245)', 'names: light boxes (Shawn\'s pick)');
+  ok(await page.$eval('#names-body input', el => getComputedStyle(el).backgroundColor) === 'rgb(15, 23, 42)', 'names: dark boxes until one is typed in (Shawn\'s pick)');
   await page.locator('#names-body input[data-seat="1"]').fill('Grandma Jo');
   await page.locator('#names-body input[data-seat="1"]').press('Enter');
   ok(await page.evaluate(() => document.activeElement.dataset.seat) === '2' && await page.locator('#names-dialog').isVisible(), 'names: Next on the keyboard goes to the next name');
@@ -499,7 +499,7 @@ for (const lang of ['en', 'es', 'vi']) {
 
 {
   // Shawn's idea: dark boxes, and the one being typed in turns light.
-  const page = await newPage(390, 844, '&demo=follow&show=names&field=swap');
+  const page = await newPage(390, 844, '&demo=follow&show=names');
   const colors = () => page.$$eval('#names-body input', els => els.map(e => getComputedStyle(e).backgroundColor).join(' | '));
   const idle = await colors();
   await page.locator('#names-body input[data-seat="1"]').tap();
