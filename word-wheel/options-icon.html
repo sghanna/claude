@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<style>
+article { width: 380px; }
+article p { min-height: 100px; }
+.big { display: block; width: 180px; height: 180px; border-radius: 40px; margin: 6px 0 14px; box-shadow: 0 10px 26px #000a; }
+.home { display: flex; gap: 22px; padding: 16px 20px; border-radius: 22px; margin: 0 0 12px; }
+.home.dark { background: linear-gradient(160deg, #1f2d4d, #0b1020); }
+.home.light { background: linear-gradient(160deg, #f3efe6, #c9d6e3); }
+.app { width: 60px; text-align: center; font: 500 12px -apple-system, BlinkMacSystemFont, sans-serif; }
+.app img { display: block; width: 60px; height: 60px; border-radius: 13.5px; margin-bottom: 5px; }
+.dark .app { color: #fff; }
+.light .app { color: #111; }
+</style>
+<title>Word Wheel - icon options (Claude)</title>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Word Wheel: a visual choice for Shawn</div>
+  <h1>Three icons for her Home Screen</h1>
+  <p class="intro">Each icon is shown large, then at real Home Screen size next to her Hearts and Solitaire icons, on a dark and a light wallpaper. Pick one and it becomes the game's icon. (An icon already on her phone never updates by itself: delete it and add it again. Her progress is kept.)</p>
+</header>
+<main class="row" id="options"></main>
+<script>
+const HEARTS = '../hearts/icon-180.png';
+const SOLITAIRE = 'https://sghanna.github.io/mom-games/solitaire/icons/icon-180.png';
+const DEFS = `<defs><radialGradient id="felt" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#1f5238"/><stop offset=".55" stop-color="#0f2c1f"/><stop offset="1" stop-color="#05130d"/></radialGradient>` +
+  `<radialGradient id="disc" cx="45%" cy="40%" r="65%"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#eadfbf"/></radialGradient></defs>`;
+const FONT = 'font-family="-apple-system, Helvetica, Arial, sans-serif" font-weight="800" text-anchor="middle"';
+const svg = body => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">${DEFS}<rect width="512" height="512" fill="url(#felt)"/>${body}</svg>`);
+
+// Option 1: the level 1 grid, CAT across and ACT down, as big ivory tiles (also saved as icon.svg and the icon PNGs).
+function tile(x, y, ch) {
+  return `<rect x="${x + 5}" y="${y + 9}" width="138" height="138" rx="22" fill="#000" opacity=".4"/>` +
+    `<rect x="${x}" y="${y}" width="138" height="138" rx="22" fill="#fffaf0" stroke="#fbbf24" stroke-width="9"/>` +
+    `<text x="${x + 69}" y="${y + 112}" font-size="118" fill="#1b1208" ${FONT}>${ch}</text>`;
+}
+const tiles = tile(33, 70, 'C') + tile(187, 70, 'A') + tile(341, 70, 'T') + tile(187, 224, 'C') + tile(187, 378, 'T');
+
+// Option 3: a wheel with only three big letters and the swipe path.
+const big3 = `<circle cx="256" cy="256" r="214" fill="url(#disc)" stroke="#fbbf24" stroke-width="18"/>` +
+  `<polyline points="256,128 145,320 367,320" fill="none" stroke="#fbbf24" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>` +
+  `<polyline points="256,128 145,320 367,320" fill="none" stroke="#0f172a" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>` +
+  `<g ${FONT} font-size="112"><circle cx="256" cy="128" r="84" fill="#0f172a"/><text x="256" y="167" fill="#fff7df">C</text>` +
+  `<circle cx="145" cy="320" r="84" fill="#0f172a"/><text x="145" y="359" fill="#fff7df">A</text>` +
+  `<circle cx="367" cy="320" r="84" fill="#0f172a"/><text x="367" y="359" fill="#fff7df">T</text></g>`;
+
+const OPTIONS = [
+  ['Option 1 (my choice, live now): CAT tiles', 'The first puzzle she will solve, CAT across and ACT down, as five big ivory tiles. The largest letters of the three, and it reads as a crossword. My reason: at 60 points one big shape beats many small letters.', 'icon-512.png'],
+  ['Option 2: six-letter wheel', 'The first icon, made with the game: the wheel with W O R D S E and a swipe through W-O-R. It looks most like the game screen, but six letters are small at this size.', 'icon-options/wheel6.svg'],
+  ['Option 3: three-letter wheel', 'The wheel with just C, A, T, each letter much bigger than in option 2, and the swipe path through all three.', svg(big3)]
+];
+
+document.getElementById('options').innerHTML = OPTIONS.map(([title, text, src]) => `
+  <article>
+    <h2>${title}</h2>
+    <p>${text}</p>
+    <img class="big" src="${src}" alt="">
+    ${['dark', 'light'].map(w => `<div class="home ${w}">
+      <div class="app"><img src="${SOLITAIRE}" alt="">Solitaire</div>
+      <div class="app"><img src="${HEARTS}" alt="">Hearts</div>
+      <div class="app"><img src="${src}" alt="">Word Wheel</div>
+    </div>`).join('')}
+  </article>`).join('');
+</script>
+</body>
+</html>

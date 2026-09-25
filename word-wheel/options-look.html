@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<style>
+article p { min-height: 96px; }
+.ratios { font-size: 16px; line-height: 1.5; color: #d3dbd5; margin: 0 0 12px; padding-left: 20px; min-height: 120px; }
+.ratios b { color: #f7f0df; }
+.moments { margin-top: 10px; }
+</style>
+<title>Word Wheel - three looks (Claude)</title>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Word Wheel: a visual choice for Shawn</div>
+  <h1>Three looks for the game</h1>
+  <p class="intro">The same level, drawn three ways. Each phone below is the real game, so you can swipe or tap letters in it. Only the colors and background change; sizes and layout are the same in all three. The numbers under each are contrast ratios measured from the screen's pixels (7:1 or more is the top WCAG level for text; 3:1 is the bar for outlines). Pick one and it becomes the game's look.</p>
+</header>
+<main class="row" id="options"></main>
+<script>
+// Contrast ratios measured 2026-09-25 from a 1x screenshot of level 21 at 390x844 (not from CSS values).
+const LOOKS = [
+  { look: 'felt', title: 'Option 1 (my choice, live now): felt', text: 'Matches her Hearts game: pine green felt, brass, navy buttons and ivory letter tiles. My reason: one family look across her games, so nothing new to learn.', ratios: [["Grid letters", "17.1:1"], ["Wheel letters", "17.8:1 (16.7:1 when chosen)"], ["Word being spelled", "17.1:1"], ["Messages", "12.5:1"], ["Blank square outline", "8.6:1"]] },
+  { look: 'light', title: 'Option 2: light', text: 'A plain, very light background with black letters and dark blue buttons. The most like a printed puzzle book.', ratios: [["Grid letters", "21:1"], ["Wheel letters", "21:1 (10.4:1 when chosen)"], ["Word being spelled", "21:1"], ["Messages", "17.3:1"], ["Blank square outline", "8.1:1"]] },
+  { look: 'scenery', title: 'Option 3: scenery', text: 'A Wordscapes-style landscape (sky and hills, drawn by the app) with solid panels behind the grid and the wheel, so the scenery never makes letters harder to read.', ratios: [["Grid letters", "17.1:1"], ["Wheel letters", "17.8:1 (16.7:1 when chosen)"], ["Word being spelled", "17.1:1"], ["Messages", "16.7:1"], ["Blank square outline", "10.1:1"]] }
+];
+const LEVELS_TO_SHOW = [21, 61, 1];
+let level = LEVELS_TO_SHOW[0];
+
+function render() {
+  document.getElementById('options').innerHTML = LOOKS.map(o => `
+    <article>
+      <h2>${o.title}</h2>
+      <p>${o.text}</p>
+      <ul class="ratios">${o.ratios ? o.ratios.map(([k, v]) => `<li>${k}: <b>${v}</b></li>`).join('') : '<li>Contrast: to be measured</li>'}</ul>
+      <div class="phone"><iframe title="${o.title}" src="index.html?fast=1&fresh=1&level=${level}&look=${o.look}"></iframe></div>
+    </article>`).join('') +
+    `<div class="moments" style="width:100%;justify-content:center">${LEVELS_TO_SHOW.map(n => `<button aria-pressed="${n === level}" data-level="${n}">Show level ${n}</button>`).join('')}</div>`;
+}
+document.addEventListener('click', e => { const b = e.target.closest('button[data-level]'); if (b) { level = +b.dataset.level; render(); } });
+render();
+</script>
+</body>
+</html>

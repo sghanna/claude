@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en" data-look="felt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<meta name="theme-color" content="#05130d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Word Wheel">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+<title>Word Wheel</title>
+</head>
+<body>
+<div id="app" class="app">
+  <header class="topbar">
+    <button id="menu-button" class="pill" type="button" aria-haspopup="dialog">
+      <svg class="pill-icon" viewBox="0 0 20 16" aria-hidden="true" focusable="false"><path d="M2 2h16M2 8h16M2 14h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><span data-t="menu">Menu</span></button>
+    <h1 id="level-title" class="level-title">Level 1</h1>
+    <button id="help-button" class="pill" type="button" aria-haspopup="dialog"><span class="pill-q" aria-hidden="true">?</span><span data-t="help">Help</span></button>
+  </header>
+
+  <section id="grid-area" class="grid-area">
+    <div id="grid" class="grid" role="group"></div>
+  </section>
+
+  <div id="status-row" class="status-row">
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <span id="bonus-badge" class="bonus-badge" hidden></span>
+  </div>
+
+  <div id="strip-row" class="strip-row">
+    <button id="back" class="tool" type="button">
+      <svg class="tool-icon" viewBox="0 0 24 20" aria-hidden="true" focusable="false"><path d="M10 3L3 10l7 7M3.8 10H21" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-t="back">Back</span></button>
+    <div id="strip" class="strip" aria-live="polite"></div>
+    <button id="enter" class="tool go" type="button"><span data-t="enter">Enter</span></button>
+  </div>
+
+  <div id="tools-row" class="tools-row">
+    <button id="shuffle" class="tool" type="button"><span data-t="shuffle">Shuffle</span></button>
+    <button id="hint" class="tool" type="button"><span data-t="hint">Hint</span></button>
+    <button id="pick" class="tool" type="button" aria-pressed="false"><span data-t="pick">Pick a square</span></button>
+  </div>
+
+  <div id="wheel" class="wheel" role="group">
+    <svg id="wheel-svg" class="wheel-svg" aria-hidden="true" focusable="false">
+      <circle id="wheel-disc" class="wheel-disc" cx="0" cy="0" r="0"/>
+      <polyline id="path-edge" class="path-edge" points=""/>
+      <polyline id="path-core" class="path-core" points=""/>
+    </svg>
+  </div>
+</div>
+
+<div id="menu-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+    <h2 id="menu-title" data-t="menu">Menu</h2>
+    <div class="dlg-body">
+      <button type="button" class="dlg-btn" id="menu-help" data-t="mHelp">How to play</button>
+      <button type="button" class="dlg-btn" id="menu-settings" data-t="mSettings">Settings</button>
+      <button type="button" class="dlg-btn" id="menu-goto" data-t="mGoto">Go to a level</button>
+      <button type="button" class="dlg-btn primary-dlg" data-close data-t="mBack">Back to the game</button>
+      <div class="dlg-divider" aria-hidden="true"></div>
+      <button type="button" class="dlg-btn danger" id="menu-new" data-t="mNew">Start over from level 1</button>
+    </div>
+  </div>
+</div>
+
+<div id="new-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="new-title">
+    <h2 id="new-title" data-t="newTitle">Start over from level 1?</h2>
+    <div class="dlg-body"><p data-t="newBody"></p></div>
+    <div class="dlg-foot">
+      <button type="button" class="dlg-btn primary-dlg" data-close data-t="keep">Keep playing</button>
+      <button type="button" class="dlg-btn danger" id="confirm-new" data-t="yesNew">Yes, start over</button>
+    </div>
+  </div>
+</div>
+
+<div id="help-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <h2 id="help-title" data-t="mHelp">How to play</h2>
+    <div class="dlg-body"><ul class="rules" id="rules"></ul></div>
+    <div class="dlg-foot"><button type="button" class="dlg-btn primary-dlg" data-close data-t="gotIt">Got it</button></div>
+  </div>
+</div>
+
+<div id="settings-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <h2 id="settings-title" data-t="mSettings">Settings</h2>
+    <div class="dlg-body" id="settings-body"></div>
+    <div class="dlg-foot"><button type="button" class="dlg-btn primary-dlg" data-close data-t="done">Done</button></div>
+  </div>
+</div>
+
+<div id="goto-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="goto-title">
+    <h2 id="goto-title" data-t="gotoTitle">Go to a level</h2>
+    <div class="dlg-body">
+      <p id="goto-body"></p>
+      <div class="stepper">
+        <button type="button" class="step-btn" id="goto-minus"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h16" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg><span class="sr" data-t="less">One less</span></button>
+        <output id="goto-value" class="step-value" aria-live="polite">1</output>
+        <button type="button" class="step-btn" id="goto-plus"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg><span class="sr" data-t="more">One more</span></button>
+      </div>
+      <div class="stepper small">
+        <button type="button" class="step-btn" id="goto-minus10">-10</button>
+        <button type="button" class="step-btn" id="goto-plus10">+10</button>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="dlg-btn primary-dlg" id="goto-go" data-t="go">Go</button>
+      <button type="button" class="dlg-btn" data-close data-t="cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="results-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="results-title">
+    <h2 id="results-title"></h2>
+    <div class="dlg-body" id="results-body"></div>
+    <div class="dlg-foot"><button type="button" class="dlg-btn primary-dlg big" id="next-level" data-t="nextLevel">Next level</button></div>
+  </div>
+</div>
+
+<div id="notice-dialog" class="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="notice-title">
+    <h2 id="notice-title" data-t="title">Word Wheel</h2>
+    <div class="dlg-body"><p id="notice-body"></p></div>
+    <div class="dlg-foot"><button type="button" class="dlg-btn primary-dlg" data-close data-t="ok">OK</button></div>
+  </div>
+</div>
+
+<div class="rotate-note" aria-hidden="true"><p data-t="rotate">Please turn your phone upright to play.</p></div>
+
+<script src="levels.js"></script>
+<script src="i18n.js"></script>
+<script src="fx.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

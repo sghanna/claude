@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="felt" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#1f5238"/><stop offset="0.55" stop-color="#0f2c1f"/><stop offset="1" stop-color="#05130d"/>
+    </radialGradient>
+    <radialGradient id="disc" cx="45%" cy="40%" r="65%">
+      <stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#eadfbf"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#felt)"/>
+  <circle cx="256" cy="256" r="196" fill="url(#disc)" stroke="#fbbf24" stroke-width="16"/>
+  <polyline points="256,120 374,188 374,324" fill="none" stroke="#fbbf24" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="256,120 374,188 374,324" fill="none" stroke="#0f172a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <g font-family="-apple-system, Helvetica, Arial, sans-serif" font-weight="800" font-size="66" text-anchor="middle">
+    <circle cx="256" cy="120" r="50" fill="#0f172a"/><text x="256" y="143" fill="#fff7df">W</text>
+    <circle cx="374" cy="188" r="50" fill="#0f172a"/><text x="374" y="211" fill="#fff7df">O</text>
+    <circle cx="374" cy="324" r="50" fill="#0f172a"/><text x="374" y="347" fill="#fff7df">R</text>
+    <circle cx="256" cy="392" r="50" fill="#fffaf0" stroke="#8b6f2e" stroke-width="5"/><text x="256" y="415" fill="#1b1208">D</text>
+    <circle cx="138" cy="324" r="50" fill="#fffaf0" stroke="#8b6f2e" stroke-width="5"/><text x="138" y="347" fill="#1b1208">S</text>
+    <circle cx="138" cy="188" r="50" fill="#fffaf0" stroke="#8b6f2e" stroke-width="5"/><text x="138" y="211" fill="#1b1208">E</text>
+  </g>
+</svg>
