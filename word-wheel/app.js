@@ -33,7 +33,7 @@
   const LEVELS = Array.isArray(window.LEVELS) ? window.LEVELS : [];
   const MIN_LEN = 3;
   const DEFAULT_LOOK = 'felt';   // Shawn picks the look; ship his pick by changing this one constant
-  const DEFAULT_IPAD = 'today';  // Shawn picks the iPad layout; ship his pick by changing this one constant
+  const DEFAULT_IPAD = 'split';  // Shawn's pick (Sept 25); ship a different pick by changing this one constant
   const LOOKS = ['felt', 'light', 'scenery'];
   const IPADS = ['today', 'fill', 'split'];
   const REAL_KEY = 'claude-word-wheel-save', TEST_KEY = 'claude-word-wheel-test', SET_KEY = 'claude-word-wheel-settings';

@@ -39,11 +39,11 @@ Details: `tools/WORDS.md`.
 
 ## iPad
 
-Her iPad Air 2 (iPadOS 15.8) and Shawn's iPad mini 5 both measure 768 x 1024 points; the mini shows the same layout about 20% smaller. Three layouts sit behind the URL option `?ipad=` (not saved). Until Shawn picks, the live game uses `today`. Ship a pick by changing `DEFAULT_IPAD` in app.js.
+Her iPad Air 2 (iPadOS 15.8) and Shawn's iPad mini 5 both measure 768 x 1024 points; the mini shows the same layout about 20% smaller. Three layouts sit behind the URL option `?ipad=` (not saved). Shawn picked `split` on Sept 25, and it's live. Ship a different pick by changing `DEFAULT_IPAD` in app.js.
 
 - **`fill`** (Claude's recommendation): upright, everything grows together by one scale, u (1.30 on a 768 x 1024 iPad): grid squares, wheel letters, buttons, text and dialogs. It's the phone layout, bigger. Sideways there's no extra height, so it looks like today. On the 146 levels with 7-row grids of up to 6 columns, the word strip and buttons get a little shorter (as on a small phone) so squares and letters never come out smaller than today's.
 - **`today`**: the phone-width column (430 px) with empty space on both sides.
-- **`split`**: `fill` when upright. Sideways (at least 900 wide and 1.2 times as wide as tall), two columns: the grid on the left; the status line, word strip, buttons and wheel on the right (u = 1.26).
+- **`split`** (Shawn's pick, live): `fill` when upright. Sideways (at least 900 wide and 1.2 times as wide as tall), two columns: the grid on the left; the status line, word strip, buttons and wheel on the right (u = 1.26).
 
 Any screen 430 points wide or narrower gets today's game exactly, whatever the option; Split View and Slide Over widths get today's sizes. Turning the iPad mid-level keeps the word in progress, found words, Pick a square and open dialogs.
 
@@ -91,7 +91,7 @@ To put it on an iPad: open the link in Safari, tap Share, then **Add to Home Scr
 - https://sghanna.github.io/claude/word-wheel/options-look.html: three looks with measured contrast. Shawn picked felt (Sept 25, live now). `?look=light` or `?look=scenery` previews one; ship a pick by changing `DEFAULT_LOOK` in app.js.
 - https://sghanna.github.io/claude/word-wheel/options-icon.html: three icons at Home Screen size next to Solitaire and Hearts. Shawn picked the six-letter wheel (Sept 25).
 - https://sghanna.github.io/claude/word-wheel/options-icon-word.html: that wheel with the swipe path spelling out the word. Live now: W-O-R-D.
-- https://sghanna.github.io/claude/word-wheel/options-ipad.html: three iPad layouts, each the real game at iPad size, upright or sideways, with measured sizes. "Try it full size" opens one in its own tab. Waiting for Shawn's pick; `today` is live.
+- https://sghanna.github.io/claude/word-wheel/options-ipad.html: three iPad layouts, each the real game at iPad size, upright or sideways, with measured sizes. "Try it full size" opens one in its own tab. Shawn picked split (Sept 25, live now).
 
 ## Publishing a change
 
