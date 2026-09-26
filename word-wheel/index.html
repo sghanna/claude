@@ -16,6 +16,13 @@
 <title>Word Wheel</title>
 </head>
 <body>
+<!-- Boot-check safety screen (boot-check.js). Styled inline so it never depends on style.css loading. -->
+<div id="boot-fail" style="position:fixed;inset:0;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;box-sizing:border-box;text-align:center;overflow:hidden;background:#05130d;color:#fff7df;font-family:-apple-system,Helvetica,Arial,sans-serif;">
+  <p id="boot-fail-msg" style="margin:0;font-size:28px;font-weight:800;line-height:1.3;max-width:600px;overflow-wrap:break-word;"></p>
+  <p id="boot-fail-error" style="margin:0;font-size:18px;font-weight:600;line-height:1.35;max-width:600px;color:#eee9d8;overflow-wrap:break-word;"></p>
+  <p id="boot-fail-os" style="margin:0;font-size:18px;font-weight:600;line-height:1.35;color:#eee9d8;"></p>
+</div>
+
 <div id="app" class="app">
   <header class="topbar">
     <button id="menu-button" class="pill" type="button" aria-haspopup="dialog">
@@ -136,6 +143,7 @@
 
 <div class="rotate-note" aria-hidden="true"><p data-t="rotate">Please turn your phone upright to play.</p></div>
 
+<script src="boot-check.js"></script>
 <script src="levels.js"></script>
 <script src="i18n.js"></script>
 <script src="fx.js"></script>

@@ -3,8 +3,8 @@
    Every game on sghanna.github.io shares one cache store, so this only ever deletes its own old copies,
    and it refills its copy on the next online visit if another app's cleanup wiped it. */
 const PREFIX = 'claude-word-wheel-';
-const VERSION = PREFIX + 'v2';
-const FILES = ['./', 'index.html', 'style.css', 'levels.js', 'i18n.js', 'fx.js', 'app.js', 'manifest.json',
+const VERSION = PREFIX + 'v3';
+const FILES = ['./', 'index.html', 'style.css', 'levels.js', 'i18n.js', 'fx.js', 'app.js', 'boot-check.js', 'manifest.json',
   'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

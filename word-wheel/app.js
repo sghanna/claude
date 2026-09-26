@@ -1,10 +1,11 @@
 /* Word Wheel (Claude): screen, wheel input, hints, saving and pacing. Levels come from levels.js (globalThis.LEVELS).
 
    Test hook, for automated tests only: window.__wordwheel
-     state()         -> { levelIndex, found[], revealed[], bonusFound[], current, order }
+     state()         -> { levelIndex, found[], revealed[], bonusFound[], current, order, allLevels }
                         levelIndex is 0-based. found and bonusFound hold uppercase words. revealed holds "r,c" strings for
                         squares shown by Hint or Pick a square. current is the word in the strip, uppercase.
                         order[slot] = index into level().letters of the letter shown at that place on the wheel.
+                        allLevels: true when Go to a level reaches every level (a save started on this device, see blankSave).
      level()         -> the current level object from levels.js
      letterCenter(i) -> { x, y }: client coordinates of the center of letter i, where i indexes level().letters.
                         Shuffle moves the letters around; letter i is always the element .wheel-letter[data-i="i"].
@@ -13,11 +14,17 @@
      saveKey         -> the localStorage key in use ('claude-word-wheel-save', or 'claude-word-wheel-test' for tests)
      sizes()         -> the measured layout: { cell, letter, letterFont, gridFont, stripFont }
      sizesFor(n)     -> { cell, letter }: the sizes level n (1-based) would get on this screen
+     ipad()          -> { option, u, twoCol }: the ?ipad= option in effect ('today', 'fill' or 'split'), the scale u in
+                        effect now (1 on a phone, with 'today', and whenever nothing grows) and whether two columns show now
+   window.__wordwheelReady is set to true once the first level is drawn (boot-check.js reads it).
    URL options:
      ?fast=1   no motion delays (tests)
      ?level=N  tests only: play level N in the separate test save. Opening the same N again resumes it.
      ?fresh=1  tests only: clear the test save when the page is opened (a reload keeps it)
      ?lang=en|es|vi, ?look=felt|light|scenery (the look is not saved)
+     ?ipad=today|fill|split  how a screen wider than a phone (an iPad) is used; not saved (see iPadMode):
+               today = the phone-width column; fill = everything grows together to use the height;
+               split = fill when upright, and two columns when sideways (the grid left; the rest right)
 */
 (function () {
   'use strict';
@@ -26,13 +33,16 @@
   const LEVELS = Array.isArray(window.LEVELS) ? window.LEVELS : [];
   const MIN_LEN = 3;
   const DEFAULT_LOOK = 'felt';   // Shawn picks the look; ship his pick by changing this one constant
+  const DEFAULT_IPAD = 'today';  // Shawn picks the iPad layout; ship his pick by changing this one constant
   const LOOKS = ['felt', 'light', 'scenery'];
+  const IPADS = ['today', 'fill', 'split'];
   const REAL_KEY = 'claude-word-wheel-save', TEST_KEY = 'claude-word-wheel-test', SET_KEY = 'claude-word-wheel-settings';
   const MSG_MS = 2600;           // how long a short message stays in the status line
 
   const params = new URLSearchParams(location.search);
   const FAST = params.get('fast') === '1';
   const LOOK = LOOKS.includes(params.get('look')) ? params.get('look') : DEFAULT_LOOK;
+  const IPAD = IPADS.includes(params.get('ipad')) ? params.get('ipad') : DEFAULT_IPAD;
   document.documentElement.setAttribute('data-look', LOOK);
   const levelParam = params.has('level') ? parseInt(params.get('level'), 10) : null;
   const FRESH = params.get('fresh') === '1';
@@ -160,11 +170,15 @@
 
   /* ---------------- Saving ---------------- */
   const newStats = () => ({ levelsDone: 0, bonusTotal: 0, hintsUsed: 0 });
+  // allLevels: true only on a save this device started from nothing (a new device, such as her iPad), and then Go to
+  // a level reaches every level. A save without it (her phone's) reaches only the levels played (maxLevel).
   function blankSave(level, prev) {
-    return {
+    const save = {
       v: 1, level, found: [], revealed: [], bonus: [], order: identity(LEVELS[level - 1].letters.length), current: [],
       maxLevel: Math.max(level, (prev && prev.maxLevel) || 1), stats: (prev && prev.stats) || newStats()
     };
+    if (prev && prev.allLevels === true) save.allLevels = true;
+    return save;
   }
   let lastSaved = null;
   function saveGame() { if (S) { lastSaved = JSON.stringify(S); store.set(SAVE_KEY, S); } }
@@ -189,20 +203,19 @@
     const maxLevel = isInt(s.maxLevel, 1, N) ? Math.max(s.maxLevel, s.level) : s.level;
     const shapeOk = strArr(s.found) && strArr(s.revealed) && strArr(s.bonus) && Array.isArray(s.order) &&
       isInt(s.maxLevel, 1, N) && s.stats && typeof s.stats === 'object';
-    if (!shapeOk) return { save: blankSave(s.level, { maxLevel, stats }), problem: 'part' };
+    if (!shapeOk) return { save: blankSave(s.level, { maxLevel, stats, allLevels: s.allLevels }), problem: 'part' };
     // If levels.js has changed since the save, keep only what still fits this level.
     const lv = LEVELS[s.level - 1], n = lv.letters.length;
     const words = new Set(lv.words.map(w => w.w)), cells = new Set(lv.words.flatMap(cellsOfWord));
     const bonus = new Set((lv.bonus || []).map(x => String(x).toUpperCase()));
     const order = s.order.length === n && identity(n).every(i => s.order.includes(i)) ? s.order.slice() : identity(n);
     const current = Array.isArray(s.current) ? s.current.filter((x, i, a) => isInt(x, 0, n - 1) && a.indexOf(x) === i) : [];
-    return {
-      save: {
-        v: 1, level: s.level, found: uniq(s.found.filter(w => words.has(w))), revealed: uniq(s.revealed.filter(k => cells.has(k))),
-        bonus: uniq(s.bonus.filter(w => bonus.has(w))), order, current, maxLevel, stats
-      },
-      problem: null
+    const save = {
+      v: 1, level: s.level, found: uniq(s.found.filter(w => words.has(w))), revealed: uniq(s.revealed.filter(k => cells.has(k))),
+      bonus: uniq(s.bonus.filter(w => bonus.has(w))), order, current, maxLevel, stats
     };
+    if (s.allLevels === true) save.allLevels = true;
+    return { save, problem: null };
   }
 
   function load() {
@@ -210,11 +223,13 @@
     const reloaded = nav ? nav.type === 'reload' : !!(performance.navigation && performance.navigation.type === 1);
     if (FRESH && !reloaded) store.del(SAVE_KEY);
     let { save, problem } = readSave();
+    const fromNothing = !save;   // no readable save on this device (a first open, or problem 'all')
     if (levelParam !== null) {
       const n = Math.min(Math.max(levelParam || 1, 1), LEVELS.length);
       if (!save || save.level !== n) save = blankSave(n, save);
     }
     S = save || blankSave(1);
+    if (fromNothing) S.allLevels = true;
     return problem;
   }
 
@@ -222,13 +237,32 @@
   // Row heights, top to bottom. The compact set is used when the roomy one can't keep the minimum sizes
   // (big grids on small phones).
   // pad: margin around the squares (the scenery look paints a panel there); sp: least space between wheel letters;
-  // margin: space above and below the wheel letters.
+  // margin: space above and below the wheel letters; ring: how far the disc reaches past the letters.
   const PRESETS = [
-    { top: 46, gapTop: 8, status: 30, strip: 56, gapStrip: 8, tools: 50, gapTools: 10, gapWheel: 2, pad: 4, sp: 6, spRatio: 0.09, margin: 3 },
-    { top: 44, gapTop: 2, status: 24, strip: 46, gapStrip: 3, tools: 44, gapTools: 3, gapWheel: 0, pad: 2, sp: 4, spRatio: 0, margin: 1 }
+    { top: 46, gapTop: 8, status: 30, strip: 56, gapStrip: 8, tools: 50, gapTools: 10, gapWheel: 2, pad: 4, sp: 6, spRatio: 0.09, margin: 3, ring: 10 },
+    { top: 44, gapTop: 2, status: 24, strip: 46, gapStrip: 3, tools: 44, gapTools: 3, gapWheel: 0, pad: 2, sp: 4, spRatio: 0, margin: 1, ring: 10 }
   ];
   const CAP = 66;                  // biggest grid square
   const gapFor = sq => (sq >= 52 ? 4 : sq >= 42 ? 3 : 2);
+  // Every fixed size plan() uses. A screen bigger than a phone (an iPad, see iPadMode) multiplies them all by one
+  // number, u; the phone's kit (u = 1) is the numbers above, untouched. dCap: the biggest wheel letters for 3, 4, and
+  // 5 or more letters. sq1, d1, sq2, d0: plan()'s steps. letterFont, stripFont, line: the floors and cap in dims.
+  const PHONE_KIT = { u: 1, presets: PRESETS, cap: CAP, gapFor, dCap: [92, 88, 84], sq1: 46, d1: 72, sq2: 52, d0: 64, letterFont: 40, stripFont: 40, line: 10 };
+  // uCap: the wheel letters' own scale, when it isn't u (two columns, see iPadMode).
+  function kitFor(u, uCap) {
+    if (u === 1 && !uCap) return PHONE_KIT;
+    const k = n => Math.round(n * u);
+    const presets = PRESETS.map(P => {
+      const out = {};
+      Object.keys(P).forEach(key => { out[key] = key === 'spRatio' ? P[key] : k(P[key]); });
+      return out;
+    });
+    return {
+      u, presets, cap: k(CAP), gapFor: sq => (sq >= k(52) ? k(4) : sq >= k(42) ? k(3) : k(2)),
+      dCap: PHONE_KIT.dCap.map(n => Math.round(n * (uCap || u))), sq1: k(46), d1: k(72), sq2: k(52), d0: k(64),
+      letterFont: k(40), stripFont: k(40), line: k(10)
+    };
+  }
 
   // Letters sit on a ring. Six letters sit two on top, two at the sides and two below: same spacing, less height.
   function wheelGeom(n, d, P) {
@@ -243,44 +277,140 @@
     const ys = pts.map(p => p.y), xs = pts.map(p => p.x);
     return {
       R, pts, h: Math.max(...ys) - Math.min(...ys) + d, w: Math.max(...xs) - Math.min(...xs) + d,
-      mid: (Math.max(...ys) + Math.min(...ys)) / 2, disc: R + d / 2 + 10
+      mid: (Math.max(...ys) + Math.min(...ys)) / 2, disc: R + d / 2 + P.ring
     };
   }
 
   // Share the height between the grid and the wheel: grid squares up to 46 px first, then wheel letters up to 72,
-  // squares up to 52, letters up to their cap, and finally squares up to CAP.
-  function plan(P, innerW, innerH, lv) {
-    const box = boxOf(lv), n = lv.letters.length, rows = box.rows, cols = box.cols;
+  // squares up to 52, letters up to their cap, and finally squares up to CAP (each times u: K is the kit, see kitFor).
+  // least (bigger screens only, see fillPlan): if the squares or the letters come out smaller than least's, they get
+  // least's size and the other one gets what is left.
+  function plan(P, innerW, innerH, lv, K, least) {
+    const box = boxOf(lv), n = lv.letters.length, rows = box.rows, cols = box.cols, gapOf = K.gapFor;
     const room = innerH - (P.top + P.gapTop + P.status + P.strip + P.gapStrip + P.tools + P.gapTools + P.gapWheel) - 2 * P.pad;
-    const gridH = sq => rows * (sq + gapFor(sq)) - gapFor(sq);
-    const gridW = sq => cols * (sq + gapFor(sq)) - gapFor(sq);
-    let sqMax = CAP;
+    const gridH = sq => rows * (sq + gapOf(sq)) - gapOf(sq);
+    const gridW = sq => cols * (sq + gapOf(sq)) - gapOf(sq);
+    let sqMax = K.cap;
     while (sqMax > 16 && gridW(sqMax) > innerW - 2 * P.pad) sqMax--;
-    let dMax = n <= 3 ? 92 : n === 4 ? 88 : 84;
+    let dMax = n <= 3 ? K.dCap[0] : n === 4 ? K.dCap[1] : K.dCap[2];
     while (dMax > 40 && wheelGeom(n, dMax, P).w > innerW - 4) dMax--;
     // wheelMin: just the letters. wheelFull: the whole disc behind them as well.
     const wheelMin = d => Math.ceil(wheelGeom(n, d, P).h) + 2 * P.margin;
     const wheelFull = d => Math.max(wheelMin(d), Math.ceil(2 * wheelGeom(n, d, P).disc) + 2 * P.margin);
     const sqFor = (d, wh) => { let s = sqMax; while (s > 16 && gridH(s) + wh(d) > room) s--; return s; };
     const dFor = (sq, wh) => { let d = dMax; while (d > 40 && gridH(sq) + wh(d) > room) d--; return d; };
-    let d = Math.min(64, dMax);
+    let d = Math.min(K.d0, dMax);
     let sq = sqFor(d, wheelMin);
-    if (sq >= 46) {
-      d = Math.max(d, Math.min(72, dFor(46, wheelMin)));
-      sq = Math.min(52, sqFor(d, wheelMin));
+    if (sq >= K.sq1) {
+      d = Math.max(d, Math.min(K.d1, dFor(K.sq1, wheelMin)));
+      sq = Math.min(K.sq2, sqFor(d, wheelMin));
       // Letters grow past this only while the whole disc still fits behind them.
       const dDisc = dFor(sq, wheelFull);
       if (dDisc >= d) { d = dDisc; sq = sqFor(d, wheelFull); } else sq = sqFor(d, wheelMin);
     }
-    return { P, n, rows, cols, r0: box.r0, c0: box.c0, sq, d, room, gap: gapFor(sq), gridH: gridH(sq), gridW: gridW(sq), wheelMin: wheelMin(d) };
+    if (least && sq < least.sq) { sq = Math.min(least.sq, sqMax); d = dFor(sq, wheelFull); if (d < least.d) d = dFor(sq, wheelMin); }
+    else if (least && d < least.d) { d = Math.min(least.d, dMax); sq = sqFor(d, wheelFull); if (sq < least.sq) sq = sqFor(d, wheelMin); }
+    return { P, n, rows, cols, r0: box.r0, c0: box.c0, sq, d, room, gap: gapOf(sq), gridH: gridH(sq), gridW: gridW(sq), wheelMin: wheelMin(d) };
   }
 
-  function bestPlan(innerW, innerH, lv) {
-    let p = plan(PRESETS[0], innerW, innerH, lv);
-    const score = q => Math.min(q.sq / 46, q.d / 64);   // 1 or more: both comfortably above the minimums
-    if (score(p) < 1) { const q = plan(PRESETS[1], innerW, innerH, lv); if (score(q) > score(p)) p = q; }
+  function bestPlan(innerW, innerH, lv, K) {
+    let p = plan(K.presets[0], innerW, innerH, lv, K);
+    const score = q => Math.min(q.sq / K.sq1, q.d / K.d0);   // 1 or more: both comfortably above the minimums
+    if (score(p) < 1) { const q = plan(K.presets[1], innerW, innerH, lv, K); if (score(q) > score(p)) p = q; }
     return p;
   }
+
+  // One column (a phone, or fill): the phone's plan, with every size times u. On a bigger screen, a level where that
+  // gives smaller squares or letters than today's phone-width column would there keeps today's sizes instead: with
+  // the roomy rows if they fit, else with the compact ones (as on a small phone).
+  function fillPlan(lv) {
+    const K = ipadNow.kit, p = bestPlan(inner.w, inner.h, lv, K);
+    if (K === PHONE_KIT) return p;
+    const least = bestPlan(ipadNow.todayW, inner.h, lv, PHONE_KIT);
+    const meets = q => q.sq >= least.sq && q.d >= least.d;
+    if (meets(p)) return p;
+    for (const [i, l] of [[0, least], [1, null], [1, least]]) {
+      const q = plan(K.presets[i], inner.w, inner.h, lv, K, l);
+      if (meets(q)) return q;
+    }
+    return p;
+  }
+
+  // Two columns (split, sideways): the grid gets the whole left column below the top bar, and the wheel gets what the
+  // status line, word strip and buttons leave of the right one. Its letters grow past d1 only while the whole disc fits.
+  function planTwoCol(lv) {
+    const K = ipadNow.kit, P = K.presets[0], colW = ipadNow.colW, box = boxOf(lv), n = lv.letters.length, gapOf = K.gapFor;
+    const colH = inner.h - P.top - P.gapTop;
+    const gridH = sq => box.rows * (sq + gapOf(sq)) - gapOf(sq);
+    const gridW = sq => box.cols * (sq + gapOf(sq)) - gapOf(sq);
+    let sq = K.cap;
+    while (sq > 16 && (gridW(sq) > colW - 2 * P.pad || gridH(sq) > colH - 2 * P.pad)) sq--;
+    const room = colH - (P.status + P.strip + P.gapStrip + P.tools + P.gapTools + P.gapWheel);
+    let dMax = n <= 3 ? K.dCap[0] : n === 4 ? K.dCap[1] : K.dCap[2];
+    while (dMax > 40 && wheelGeom(n, dMax, P).w > colW - 4) dMax--;
+    const wheelMin = d => Math.ceil(wheelGeom(n, d, P).h) + 2 * P.margin;
+    const wheelFull = d => Math.max(wheelMin(d), Math.ceil(2 * wheelGeom(n, d, P).disc) + 2 * P.margin);
+    const dFit = wh => { let d = dMax; while (d > 40 && wh(d) > room) d--; return d; };
+    const d = Math.max(Math.min(K.d1, dFit(wheelMin)), dFit(wheelFull));
+    return {
+      P, n, rows: box.rows, cols: box.cols, r0: box.r0, c0: box.c0, sq, d, room, gap: gapOf(sq), gridH: gridH(sq), gridW: gridW(sq),
+      wheelMin: wheelMin(d), colH
+    };
+  }
+
+  const planFor = lv => (ipadNow.twoCol ? planTwoCol(lv) : fillPlan(lv));
+
+  // ?ipad= (see the header): how a screen wider than a phone is used. On a phone (430 points wide or less), and with
+  // 'today', nothing changes: u = 1 and today's phone-width column.
+  // fill: one column, and everything grows by u until the game is her iPhone 16e's (763 px tall inside the safe areas)
+  // times u, or today's column (414 px wide inside its margins) times u, whichever comes first; u is 1 to 1.6.
+  // split: fill when upright. Sideways (at least 900 wide and 1.2 times as wide as tall), two columns (splitScale).
+  let ipadNow = { u: 1, twoCol: false, kit: PHONE_KIT, todayW: 0, colW: 0 };
+  function iPadMode(W, H, app) {
+    let u = 1, twoCol = false, width = 430, uCap = 0, side = 16;
+    if (IPAD !== 'today' && W > 430) {
+      const cs = getComputedStyle(app);
+      const usableH = H - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      side = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+      const fillU = (colMax, h) => Math.floor(Math.min(1.6, Math.max(1, Math.min((colMax - side) / 414, h / 763))) * 100) / 100;
+      twoCol = IPAD === 'split' && W >= 900 && W / H >= 1.2;
+      if (twoCol) {
+        width = Math.min(W - 32, 1000);
+        uCap = fillU(Math.max(430, H - 16), W - (H - usableH));   // fill's u if this screen were turned upright
+        u = splitScale(width - side, usableH, uCap);
+      } else {
+        const colMax = Math.max(430, W - 16);
+        u = fillU(colMax, usableH);
+        width = Math.min(colMax, Math.round(430 * u));
+      }
+    }
+    // Nothing is set when nothing grows (a phone, 'today', or fill on a sideways iPad): today's column exactly.
+    const root = document.documentElement.style;
+    if (u === 1 && !twoCol) { root.removeProperty('--u'); app.style.removeProperty('max-width'); }
+    else { root.setProperty('--u', String(u)); app.style.maxWidth = width + 'px'; }
+    app.classList.toggle('two-col', twoCol);
+    ipadNow = { u, twoCol, kit: kitFor(u, twoCol ? Math.max(u, uCap) : 0), todayW: 430 - side, colW: 0 };
+  }
+
+  // Two columns: the largest u from 1 to 1.5 where the right column is her iPhone's width (374 px inside its margins)
+  // times u or wider, so every label fits as it does there, and holds the status line, word strip, buttons and a wheel
+  // with every level's letters at their cap (scaled by uCap: never smaller than upright) and the whole disc showing.
+  function splitScale(innerW, innerH, uCap) {
+    const counts = uniq(LEVELS.map(lv => lv.letters.length));
+    for (let c = 150; c > 100; c--) {
+      const u = c / 100, K = kitFor(u, Math.max(u, uCap)), P = K.presets[0], colW = (innerW - 24 * u) / 2;
+      const room = innerH - (P.top + P.gapTop + P.status + P.strip + P.gapStrip + P.tools + P.gapTools + P.gapWheel);
+      const fits = n => {
+        const g = wheelGeom(n, n <= 3 ? K.dCap[0] : n === 4 ? K.dCap[1] : K.dCap[2], P);
+        return g.w <= colW - 4 && Math.ceil(2 * g.disc) + 2 * P.margin <= room;
+      };
+      if (colW >= 374 * u && counts.every(fits)) return u;
+    }
+    return 1;
+  }
+
+  // Text sizes grow with u too (u = 1 on a phone: the same numbers).
+  const byU = n => Math.round(n * ipadNow.u);
 
   function layout() {
     const vv = window.visualViewport;
@@ -293,18 +423,27 @@
     root.setProperty('--safe-bottom-min', (tall ? 34 : 6) + 'px');
     root.setProperty('--modal-max', (H - 32) + 'px');
     const app = $('app');
+    iPadMode(W, H, app);
     app.style.height = H + 'px';
     const cs = getComputedStyle(app);
     const innerW = app.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     const innerH = H - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
     inner = { w: innerW, h: innerH };
+    if (ipadNow.twoCol) ipadNow.colW = (innerW - 24 * ipadNow.u) / 2;   // the grid's gap is calc(24px * var(--u))
 
-    const p = bestPlan(innerW, innerH, L);
+    const K = ipadNow.kit, twoCol = ipadNow.twoCol;
+    const p = planFor(L);
     const P = p.P;
     const geo = wheelGeom(p.n, p.d, P);
-    const extra = Math.max(0, p.room - p.gridH - p.wheelMin);
-    const wheelH = Math.floor(Math.min(p.wheelMin + extra, Math.max(p.wheelMin, Math.ceil(2 * geo.disc) + 4)));
-    const gridAreaH = Math.floor(p.room + 2 * P.pad - wheelH);
+    // One column: the wheel gets its letters' height and what the grid leaves, up to its disc; the grid, the rest.
+    // Two columns: the grid gets the left column, and the wheel the rest of the right one.
+    let wheelH, gridAreaH;
+    if (twoCol) { wheelH = Math.floor(p.room); gridAreaH = Math.floor(p.colH); }
+    else {
+      const extra = Math.max(0, p.room - p.gridH - p.wheelMin);
+      wheelH = Math.floor(Math.min(p.wheelMin + extra, Math.max(p.wheelMin, Math.ceil(2 * geo.disc) + 4)));
+      gridAreaH = Math.floor(p.room + 2 * P.pad - wheelH);
+    }
 
     const topbar = document.querySelector('.topbar');
     topbar.style.height = P.top + 'px';
@@ -322,15 +461,15 @@
     wheel.style.marginBottom = P.gapWheel + 'px';
 
     const discFits = wheelH >= 2 * geo.disc;
-    const cx = innerW / 2, cy = discFits ? wheelH / 2 : wheelH / 2 - geo.mid;
+    const cx = (twoCol ? ipadNow.colW : innerW) / 2, cy = discFits ? wheelH / 2 : wheelH / 2 - geo.mid;
     dims = {
       sq: p.sq, gap: p.gap, pad: P.pad, rows: p.rows, cols: p.cols, r0: p.r0, c0: p.c0, d: p.d, cx, cy, wheelH,
       pos: geo.pts.map(pt => ({ x: cx + pt.x, y: cy + pt.y })),
       disc: discFits ? geo.disc - 2 : Math.max(0, Math.min(geo.disc, cy - 2, wheelH - cy - 2)),
-      letterFont: Math.max(40, Math.round(p.d * 0.6)),
+      letterFont: Math.max(K.letterFont, Math.round(p.d * 0.6)),
       gridFont: Math.round(p.sq * 0.86),   // ink (cap height) about 60% of the square, per the spec
-      stripFont: Math.min(40, Math.round(P.strip * 0.7)),
-      line: Math.max(10, Math.round(p.d * 0.17))
+      stripFont: Math.min(K.stripFont, Math.round(P.strip * 0.7)),
+      line: Math.max(K.line, Math.round(p.d * 0.17))
     };
     buildGrid();
     buildWheel();
@@ -397,9 +536,9 @@
     const title = $('level-title');
     title.textContent = T.t('level', { n: S.level });
     // It sits centered between Menu and Help, and shrinks a little if a longer language needs it.
-    let size = 23;
+    let size = byU(23);
     title.style.fontSize = size + 'px';
-    while (title.scrollWidth > title.clientWidth + 1 && size > 18) { size -= 1; title.style.fontSize = size + 'px'; }
+    while (title.scrollWidth > title.clientWidth + 1 && size > byU(18)) { size -= 1; title.style.fontSize = size + 'px'; }
   }
 
   function paintGrid() {
@@ -429,9 +568,9 @@
     el.setAttribute('aria-label', T.t('stripLabel') + ': ' + word);
     let size = dims.stripFont;
     el.style.fontSize = size + 'px';
-    const room = el.clientWidth - 14;
+    const room = el.clientWidth - byU(14);
     const width = () => [...el.children].reduce((w, s) => w + s.offsetWidth + 2, 0);
-    while (word && width() > room && size > 22) { size -= 1; el.style.fontSize = size + 'px'; }
+    while (word && width() > room && size > byU(22)) { size -= 1; el.style.fontSize = size + 'px'; }
   }
 
   function paintStatus() {
@@ -448,9 +587,9 @@
     badge.hidden = !S.bonus.length;
     badge.textContent = T.t('bonus', { n: S.bonus.length });
     const fit = () => {
-      let size = 20;
+      let size = byU(20);
       el.style.fontSize = size + 'px';
-      while (el.scrollWidth > el.clientWidth + 1 && size > 18) { size -= 1; el.style.fontSize = size + 'px'; }
+      while (el.scrollWidth > el.clientWidth + 1 && size > byU(18)) { size -= 1; el.style.fontSize = size + 'px'; }
     };
     fit();
     // A long message on a narrow phone borrows the badge's room until it clears.
@@ -461,12 +600,12 @@
     $('pick').setAttribute('aria-pressed', String(ui.pick));
   }
 
-  // Tool labels shrink a little (never below 18 px) if a longer language needs it.
+  // Tool labels shrink a little (never below 18 px, times u) if a longer language needs it.
   function fitTools() {
     document.querySelectorAll('.tool').forEach(b => {
-      let size = 19;
+      let size = byU(19);
       b.style.fontSize = size + 'px';
-      while (b.scrollWidth > b.clientWidth + 1 && size > 18) { size -= 1; b.style.fontSize = size + 'px'; }
+      while (b.scrollWidth > b.clientWidth + 1 && size > byU(18)) { size -= 1; b.style.fontSize = size + 'px'; }
     });
   }
 
@@ -802,12 +941,13 @@
   }
 
   let gotoVal = 1;
+  const gotoMax = () => (S.allLevels === true ? LEVELS.length : S.maxLevel);   // see blankSave
   function paintGoto() {
     $('goto-value').textContent = gotoVal;
-    $('goto-body').textContent = T.t('gotoBody', { n: S.maxLevel });
+    $('goto-body').textContent = S.allLevels === true ? T.t('gotoBodyAll', { n: LEVELS.length }) : T.t('gotoBody', { n: S.maxLevel });
   }
   function showGoto() { gotoVal = S.level; paintGoto(); openDialog('goto-dialog'); }
-  const stepGoto = by => { gotoVal = Math.min(S.maxLevel, Math.max(1, gotoVal + by)); paintGoto(); };
+  const stepGoto = by => { gotoVal = Math.min(gotoMax(), Math.max(1, gotoVal + by)); paintGoto(); };
 
   function applyLanguage() {
     document.querySelectorAll('[data-t]').forEach(el => { el.innerHTML = T.t(el.dataset.t); });
@@ -940,7 +1080,7 @@
   window.__wordwheel = {
     state: () => ({
       levelIndex: S.level - 1, found: S.found.slice(), revealed: S.revealed.slice(), bonusFound: S.bonus.slice(),
-      current: currentWord(), order: S.order.slice()
+      current: currentWord(), order: S.order.slice(), allLevels: S.allLevels === true
     }),
     level: () => L,
     letterCenter(i) {
@@ -959,7 +1099,8 @@
     saveKey: SAVE_KEY,
     sizes: () => ({ cell: dims.sq, letter: dims.d, letterFont: dims.letterFont, gridFont: dims.gridFont, stripFont: dims.stripFont }),
     // The grid square and wheel letter sizes level N (1-based) would get on this screen, without opening it.
-    sizesFor: n => { const p = bestPlan(inner.w, inner.h, LEVELS[n - 1]); return { cell: p.sq, letter: p.d }; }
+    sizesFor: n => { const p = planFor(LEVELS[n - 1]); return { cell: p.sq, letter: p.d }; },
+    ipad: () => ({ option: IPAD, u: ipadNow.u, twoCol: ipadNow.twoCol })
   };
 
   /* ---------------- Start ---------------- */
@@ -972,6 +1113,7 @@
   layout();
   fitTools();
   paintAll();
+  window.__wordwheelReady = true;   // the first level is drawn (boot-check.js checks for this)
   saveGame();
   if (problem) showNotice(problem === 'all' ? T.t('restoreFail') : T.t('restorePart', { n: S.level }));
   else if (isComplete()) { ui.locked = true; ui.completing = true; showResults(); }

@@ -11,7 +11,7 @@
 //   ?level=N uses the 1-based level id (so state().levelIndex === N-1 right after a fresh load).
 //   ?fresh=1 clears the separate test save; ?fast=1 removes motion delays.
 import { webkit, chromium } from '/opt/homebrew/lib/node_modules/playwright/index.mjs';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 const BASE = process.argv[2] || 'http://127.0.0.1:8767/word-wheel/';
 let failures = 0, checks = 0;
@@ -697,6 +697,530 @@ try {
   ok(errs.length === 0, 'offline: no page errors ' + errs.join(' | '));
   await chrome.close();
 } catch (e) { ok(false, '11. offline section: unexpected error - ' + e.message); }
+
+// ---- iPad helpers (sections 12-17) -------------------------------------------------------
+// Contract (see .work/word-wheel-prompt.md and the ipad plan): ?ipad=today|fill|split, DEFAULT_IPAD='today';
+// window.__wordwheel.ipad() -> { option, u, twoCol }; window.__wordwheelReady true once the first level is drawn;
+// #boot-fail from boot-check.js; state().allLevels boolean, driving how far "Go to a level" reaches.
+const IPAD_VIEWPORTS = [
+  [768, 1024], [768, 954], [1024, 768], [1024, 698],
+  [320, 1024], [438, 1024], [507, 768], [694, 768]
+];
+const IPAD_OPTIONS = ['today', 'fill', 'split'];
+const IPAD_LEVEL_IDS = [...new Set([1, 21, 105, 400, 1000].map(n => Math.min(n, levels.length)))];
+const IPAD_SHOT_LEVELS = [...new Set([1, 105, 400].map(n => Math.min(n, levels.length)))];
+const phoneVals = {};
+const todayVals = {};   // todayVals[`${w}x${h}`][id] - filled in as the 'today' option runs, used by fill/split at the same viewport
+
+const isUpright = (w, h) => h >= w;
+const isSideways = (w, h) => w > h;
+// Full-screen upright iPads (768x1024, 768x954): fill and split both grow past the phone.
+const isFullUpright = (w, h) => w === 768 && (h === 1024 || h === 954);
+// Sideways with the full iPad width (1024x768, 1024x698): only split grows; fill sits at today's size.
+const isSplitSideways = (w, h) => w === 1024 && (h === 768 || h === 698);
+// Split View / Slide Over widths (320, 438, 507, 694): the usable height or width is no bigger than the
+// phone's, so u = 1 by design there for every option - "bigger than phone" does not apply.
+const isNarrowSplitView = (w, h) => (w === 320 && h === 1024) || (w === 438 && h === 1024) || (w === 507 && h === 768) || (w === 694 && h === 768);
+function biggerCheckApplies(option, w, h) {
+  if (option === 'today') return false;
+  if (isFullUpright(w, h)) return true;
+  if (isSplitSideways(w, h)) return option === 'split';
+  return false;
+}
+function atLeastTodayCheckApplies(option, w, h) {
+  return option !== 'today' && isNarrowSplitView(w, h);
+}
+function containsNumber(text, n) {
+  return (String(text).match(/[\d,]+/g) || []).some(tok => tok.replace(/,/g, '') === String(n));
+}
+function gotoValueOf(page) {
+  return page.locator('#goto-value').textContent().then(t => parseInt((t || '0').replace(/,/g, ''), 10));
+}
+
+async function ipadMeasure(page) {
+  return page.evaluate(() => {
+    const box = el => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height }; };
+    const cellEls = [...document.querySelectorAll('.cell[data-r][data-c]')].map(box);
+    const wheelEls = [...document.querySelectorAll('.wheel-letter[data-i]')].map(box);
+    const buttons = [...document.querySelectorAll('button')].filter(e => e.offsetParent).map(e => ({ box: box(e), fs: parseFloat(getComputedStyle(e).fontSize), fw: parseInt(getComputedStyle(e).fontWeight) || 400 }));
+    const btnRowEls = ['shuffle', 'hint', 'pick'].map(id => document.getElementById(id)).filter(Boolean).map(box);
+    const union = rects => rects.length ? { left: Math.min(...rects.map(r => r.left)), top: Math.min(...rects.map(r => r.top)), right: Math.max(...rects.map(r => r.right)), bottom: Math.max(...rects.map(r => r.bottom)) } : null;
+    const firstWheelLetter = document.querySelector('.wheel-letter[data-i]');
+    const filledCell = [...document.querySelectorAll('.cell[data-r][data-c]')].find(e => (e.textContent || '').trim().length > 0);
+    const toolBtn = document.querySelector('.tool');
+    const app = document.getElementById('app');
+    const ipadInfo = (window.__wordwheel && typeof window.__wordwheel.ipad === 'function') ? window.__wordwheel.ipad() : null;
+    return {
+      cellSizes: cellEls.map(r => Math.min(r.width, r.height)),
+      wheelSizes: wheelEls.map(r => Math.min(r.width, r.height)),
+      buttons: buttons.map(b => ({ w: b.box.width, h: b.box.height, fs: b.fs, fw: b.fw })),
+      gridBox: box(document.getElementById('grid')),
+      stripBox: box(document.getElementById('strip')),
+      wheelBox: box(document.getElementById('wheel')),
+      btnRow: union(btnRowEls),
+      wheelFont: firstWheelLetter ? parseFloat(getComputedStyle(firstWheelLetter).fontSize) : 0,
+      gridFont: filledCell ? parseFloat(getComputedStyle(filledCell).fontSize) : null,
+      cellFontRatio: filledCell ? parseFloat(getComputedStyle(filledCell).fontSize) / filledCell.getBoundingClientRect().width : null,
+      buttonFont: toolBtn ? parseFloat(getComputedStyle(toolBtn).fontSize) : 0,
+      gameWidth: app ? app.getBoundingClientRect().width : 0,
+      ipadInfo,
+      scrollH: document.documentElement.scrollHeight, scrollW: document.documentElement.scrollWidth,
+      innerH: innerHeight, innerW: innerWidth
+    };
+  });
+}
+function toRecord(m) {
+  return {
+    cell: m.cellSizes.length ? Math.round(Math.min(...m.cellSizes)) : null,
+    letter: m.wheelSizes.length ? Math.round(Math.min(...m.wheelSizes)) : null,
+    letterFont: m.wheelFont, gridFont: m.gridFont, buttonFont: m.buttonFont,
+    gameWidth: m.gameWidth, u: m.ipadInfo ? m.ipadInfo.u : null, twoCol: m.ipadInfo ? m.ipadInfo.twoCol : null
+  };
+}
+// 44px only where there is the most room: the reference phone (390x844) and full-screen upright iPads;
+// 38px everywhere else (matches section 8's own phone rule, generalized the same way here).
+function cellMinFor(w, h) {
+  return isFullUpright(w, h) ? 44 : 38;
+}
+function checkIpadLayout(m, w, h, option, phoneVal, todayVal, label) {
+  const cellMin = cellMinFor(w, h);
+  ok(m.cellSizes.length > 0 && m.cellSizes.every(s => s >= cellMin), `${label}: grid cells >= ${cellMin}px (min ${m.cellSizes.length ? Math.round(Math.min(...m.cellSizes)) : 'n/a'})`);
+  ok(m.wheelSizes.length > 0 && m.wheelSizes.every(s => s >= 64), `${label}: wheel letter circles >= 64px (min ${m.wheelSizes.length ? Math.round(Math.min(...m.wheelSizes)) : 'n/a'})`);
+  ok(m.buttons.length > 0 && m.buttons.every(b => b.w >= 44 && b.h >= 44), `${label}: every visible button >= 44x44`);
+  ok(m.buttons.every(b => b.fs >= 18 && b.fw >= 600), `${label}: button text >= 18px and bold`);
+  ok(m.wheelFont >= 40, `${label}: wheel letter font >= 40px (got ${m.wheelFont})`);
+  if (m.cellFontRatio === null) console.log(`WARNING: ${label}: no filled grid cell found; grid-letter font ratio check skipped`);
+  else ok(m.cellFontRatio >= 0.6, `${label}: grid letter font >= 0.6x cell size (ratio ${m.cellFontRatio.toFixed(2)})`);
+  ok(m.scrollH <= m.innerH + 1 && m.scrollW <= m.innerW + 1, `${label}: fits without scrolling`);
+  const regions = [m.gridBox, m.stripBox, m.wheelBox, m.btnRow].filter(Boolean);
+  let noOverlap = true;
+  for (let i = 0; i < regions.length; i++) for (let j = i + 1; j < regions.length; j++) if (rectsIntersect(regions[i], regions[j])) noOverlap = false;
+  ok(noOverlap, `${label}: grid, strip, button row and wheel do not overlap`);
+  const within = r => r.left >= -1 && r.top >= -1 && r.right <= m.innerW + 1 && r.bottom <= m.innerH + 1;
+  ok(regions.every(within), `${label}: grid, strip, button row and wheel stay on screen`);
+  const cellNow = m.cellSizes.length ? Math.round(Math.min(...m.cellSizes)) : 0;
+  const letterNow = m.wheelSizes.length ? Math.round(Math.min(...m.wheelSizes)) : 0;
+  if (biggerCheckApplies(option, w, h)) {
+    if (!phoneVal) console.log(`WARNING: ${label}: no phone baseline available; bigger-than-phone check skipped`);
+    else {
+      ok(cellNow > phoneVal.cell, `${label}: grid squares bigger than the phone (${cellNow} vs ${phoneVal.cell})`);
+      ok(letterNow > phoneVal.letter, `${label}: wheel letters bigger than the phone (${letterNow} vs ${phoneVal.letter})`);
+      ok(m.buttonFont > phoneVal.buttonFont, `${label}: button text bigger than the phone (${m.buttonFont} vs ${phoneVal.buttonFont})`);
+    }
+  } else if (atLeastTodayCheckApplies(option, w, h)) {
+    // At Split View / Slide Over widths, u = 1 by design (no bigger room than 'today'); fill and split should
+    // still be at least as big as 'today' at the same viewport, never smaller.
+    if (!todayVal) console.log(`WARNING: ${label}: no 'today' baseline at this viewport; at-least-today check skipped`);
+    else {
+      ok(cellNow >= todayVal.cell, `${label}: grid squares at least as big as today (${cellNow} vs ${todayVal.cell})`);
+      ok(letterNow >= todayVal.letter, `${label}: wheel letters at least as big as today (${letterNow} vs ${todayVal.letter})`);
+      ok(m.buttonFont >= todayVal.buttonFont, `${label}: button text at least as big as today (${m.buttonFont} vs ${todayVal.buttonFont})`);
+    }
+  }
+  if (m.ipadInfo) {
+    ok(m.ipadInfo.option === option, `${label}: ipad().option matches the URL (got "${m.ipadInfo.option}")`);
+    const expectTwoCol = w > 430 && option === 'split' && isSideways(w, h);
+    ok(m.ipadInfo.twoCol === expectTwoCol, `${label}: twoCol is ${expectTwoCol} (got ${m.ipadInfo.twoCol})`);
+  } else {
+    ok(false, `${label}: window.__wordwheel.ipad() is missing`);
+  }
+}
+
+// 12. iPad sizes: for today/fill/split, on levels 1/21/105/400/1000, at every iPad viewport (upright, sideways,
+//     Split View and Slide Over widths), the checks from the plan. Also writes tests/shots/ipad-sizes.json.
+try {
+  const ctx0 = await browser.newContext(phone(390, 844));
+  const p0 = await ctx0.newPage();
+  p0.errors = []; p0.on('pageerror', e => p0.errors.push(e.message));
+  for (const id of IPAD_LEVEL_IDS) {
+    await p0.goto(BASE + `index.html?fast=1&level=${id}&fresh=1`);
+    await p0.waitForFunction(() => window.__wordwheel);
+    await p0.locator('#hint').click();
+    await p0.waitForTimeout(60);
+    phoneVals[id] = toRecord(await ipadMeasure(p0));
+  }
+  ok(p0.errors.length === 0, 'iPad sizes: phone baseline (390x844) no page errors ' + p0.errors.join(' | '));
+  await ctx0.close();
+} catch (e) { ok(false, '12. iPad sizes phone-baseline: unexpected error - ' + e.message); }
+
+const sizesOut = { generatedAt: new Date().toISOString(), phone: {}, ipad: {} };
+for (const id of IPAD_LEVEL_IDS) sizesOut.phone[id] = phoneVals[id];
+
+for (const [w, h] of IPAD_VIEWPORTS) {
+  let ctx;
+  try {
+    ctx = await browser.newContext(phone(w, h));
+    const page = await ctx.newPage();
+    page.errors = [];
+    page.on('pageerror', e => page.errors.push(e.message));
+    page.on('console', m => { if (m.type() === 'error') page.errors.push('console: ' + m.text()); });
+    for (const option of IPAD_OPTIONS) {
+      for (const id of IPAD_LEVEL_IDS) {
+        const label = `ipad ${option} ${w}x${h} level ${id}`;
+        try {
+          page.errors.length = 0;
+          await page.goto(BASE + `index.html?fast=1&ipad=${option}&level=${id}&fresh=1`);
+          await page.waitForFunction(() => window.__wordwheel);
+          await page.locator('#hint').click();
+          await page.waitForTimeout(60);
+          const m = await ipadMeasure(page);
+          sizesOut.ipad[option] ??= {};
+          sizesOut.ipad[option][`${w}x${h}`] ??= {};
+          const rec = toRecord(m);
+          sizesOut.ipad[option][`${w}x${h}`][id] = rec;
+          if (option === 'today') { todayVals[`${w}x${h}`] ??= {}; todayVals[`${w}x${h}`][id] = rec; }
+          checkIpadLayout(m, w, h, option, phoneVals[id], (todayVals[`${w}x${h}`] || {})[id], label);
+          ok(page.errors.length === 0, `${label}: no page errors ` + page.errors.join(' | '));
+          if ((w === 768 && h === 1024 || w === 1024 && h === 768) && IPAD_SHOT_LEVELS.includes(id)) {
+            await page.screenshot({ path: shotPath(`ipad-${option}-${w}x${h}-level${id}.png`) });
+          }
+        } catch (e) { ok(false, `${label}: unexpected error - ` + e.message); }
+      }
+    }
+  } catch (e) { ok(false, `12. iPad sizes ${w}x${h}: unexpected error - ` + e.message); }
+  finally { if (ctx) await ctx.close(); }
+}
+try {
+  writeFileSync(shotPath('ipad-sizes.json'), JSON.stringify(sizesOut, null, 2));
+} catch (e) { ok(false, '12. iPad sizes: could not write ipad-sizes.json - ' + e.message); }
+
+// 13. Play at iPad size: finish levels 1-3 by swipe and one level by tap+Enter, at fill (768x1024) and split
+//     (1024x768); a long hold on a letter and a drift inside the wheel (fill), a long hold and a slide on a
+//     button (split) - each counted once, reusing the section 1/5/6 helpers.
+try {
+  const tapId = Math.min(4, levels.length);
+  for (const [w, h, option] of [[768, 1024, 'fill'], [1024, 768, 'split']]) {
+    try {
+      const page = await newPage(w, h, `&ipad=${option}&level=1&fresh=1`);
+      const n = Math.min(3, levels.length);
+      for (let li = 0; li < n; li++) {
+        try {
+          const shown = await finishLevelWith(page, li, levels[li], swipe, `ipad ${option} ${w}x${h} level ${li + 1} (swipe)`);
+          if (li === 0 && shown) await page.screenshot({ path: shotPath(`ipad-${option}-${w}x${h}-level-complete.png`) });
+          if (shown) await advanceToNext(page, li, `ipad ${option} ${w}x${h} level ${li + 1} (swipe)`);
+          else break;
+        } catch (e) { ok(false, `ipad ${option} ${w}x${h} level ${li + 1} (swipe): unexpected error - ` + e.message); break; }
+      }
+      ok(page.errors.length === 0, `ipad ${option} ${w}x${h}: swipe-through levels no page errors ` + page.errors.join(' | '));
+      await page.close();
+
+      const idx = tapId - 1;
+      const tp = await newPage(w, h, `&ipad=${option}&level=${tapId}&fresh=1`);
+      const shownTap = await finishLevelWith(tp, idx, levels[idx], tapWord, `ipad ${option} ${w}x${h} level ${tapId} (tap+Enter)`);
+      if (shownTap) await advanceToNext(tp, idx, `ipad ${option} ${w}x${h} level ${tapId} (tap+Enter)`);
+      ok(tp.errors.length === 0, `ipad ${option} ${w}x${h}: tap+Enter level no page errors ` + tp.errors.join(' | '));
+      await tp.close();
+
+      const mp = await newPage(w, h, `&ipad=${option}&level=1&fresh=1`);
+      const menuOpened = await openDialog(mp, 'menu-dialog');
+      ok(menuOpened, `ipad ${option} ${w}x${h}: #menu-dialog opens`);
+      await mp.screenshot({ path: shotPath(`ipad-${option}-${w}x${h}-menu.png`) });
+      await closeAnyDialog(mp);
+      ok(mp.errors.length === 0, `ipad ${option} ${w}x${h}: menu no page errors ` + mp.errors.join(' | '));
+      await mp.close();
+    } catch (e) { ok(false, `13. play at iPad size ${option} ${w}x${h}: unexpected error - ` + e.message); }
+  }
+
+  try {
+    const page = await newPage(768, 1024, '&ipad=fill&level=1&fresh=1');
+    const letters = await wheelLetters(page);
+    const c0 = await letterCenter(page, letters[0].i);
+    await page.mouse.move(c0.x, c0.y);
+    await page.mouse.down();
+    await page.waitForTimeout(900);
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+    let s = await state(page);
+    ok(s.current === letters[0].letter, `ipad fill 768x1024: long hold (900ms) on one letter adds exactly that letter (current="${s.current}")`);
+    await page.mouse.click(c0.x, c0.y);
+    await page.waitForTimeout(50);
+
+    const wheelBox = await page.locator('#wheel').boundingBox();
+    const wc = { x: wheelBox.x + wheelBox.width / 2, y: wheelBox.y + wheelBox.height / 2 };
+    const letter1 = letters[1] || letters[0];
+    const c1 = await letterCenter(page, letter1.i);
+    const dx = wc.x - c1.x, dy = wc.y - c1.y, mag = Math.hypot(dx, dy) || 1;
+    const drifted = { x: c1.x + dx / mag * 25, y: c1.y + dy / mag * 25 };
+    await page.mouse.move(c1.x, c1.y);
+    await page.mouse.down();
+    await page.mouse.move(drifted.x, drifted.y, { steps: 5 });
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+    s = await state(page);
+    ok(s.current === letter1.letter, `ipad fill 768x1024: drift 25px toward wheel center adds only that one letter (current="${s.current}")`);
+    ok(page.errors.length === 0, 'ipad fill 768x1024: wheel input details no page errors ' + page.errors.join(' | '));
+    await page.close();
+  } catch (e) { ok(false, '13. iPad wheel-input section: unexpected error - ' + e.message); }
+
+  try {
+    const page = await newPage(1024, 768, '&ipad=split&level=1&fresh=1');
+    const letters = await wheelLetters(page);
+    async function addLetter(i) { const c = await letterCenter(page, i); await page.mouse.click(c.x, c.y); }
+    await addLetter(letters[0].i);
+    await addLetter((letters[1] || letters[0]).i);
+    await addLetter((letters[2 % letters.length] || letters[0]).i);
+    let s = await state(page);
+    const startLen = s.current.length;
+    ok(startLen >= 2, 'ipad split 1024x768: button test setup has multiple letters to remove');
+
+    const backBox = await page.locator('#back').boundingBox();
+    const bx = backBox.x + backBox.width / 2, by = backBox.y + backBox.height / 2;
+    await page.mouse.move(bx, by); await page.mouse.down(); await page.waitForTimeout(700); await page.mouse.up();
+    await page.waitForTimeout(60);
+    s = await state(page);
+    ok(s.current.length === startLen - 1, `ipad split 1024x768: long hold (700ms) on #back removes exactly one letter (was ${startLen}, now ${s.current.length})`);
+
+    const lenBefore = s.current.length;
+    await page.mouse.move(bx, by); await page.mouse.down(); await page.mouse.move(bx, by - 30, { steps: 4 }); await page.mouse.up();
+    await page.waitForTimeout(60);
+    s = await state(page);
+    ok(s.current.length === lenBefore - 1, `ipad split 1024x768: #back slide 30px up before lifting removes exactly one letter (was ${lenBefore}, now ${s.current.length})`);
+    ok(page.errors.length === 0, 'ipad split 1024x768: button no page errors ' + page.errors.join(' | '));
+    await page.close();
+  } catch (e) { ok(false, '13. iPad button section: unexpected error - ' + e.message); }
+} catch (e) { ok(false, '13. play at iPad size section: unexpected error - ' + e.message); }
+
+// 14. Turning: mid-level, 768x1024 -> 1024x768 -> 768x1024 via page.setViewportSize, for fill and split. State
+//     unchanged and the layout checks pass after each turn. Three scenarios: found words + a partly spelled
+//     current word, Pick-a-square mode on, and a dialog open.
+try {
+  for (const option of ['fill', 'split']) {
+    try {
+      const page = await newPage(768, 1024, `&ipad=${option}&level=1&fresh=1`);
+      const lvl = levels[0];
+      await swipe(page, lvl.words[0].w);
+      await page.waitForTimeout(150);
+      const letters = await wheelLetters(page);
+      const c0 = await letterCenter(page, letters[0].i);
+      await page.mouse.click(c0.x, c0.y);
+      await page.waitForTimeout(50);
+      const before = await state(page);
+      ok(before.found.length >= 1 && before.current.length >= 1, `turning ${option} (words+current): setup has a found word and a partly spelled current word`);
+
+      await page.setViewportSize({ width: 1024, height: 768 });
+      await page.waitForTimeout(300);
+      let after = await state(page);
+      ok(JSON.stringify(after) === JSON.stringify(before), `turning ${option} (words+current): state unchanged after turning to 1024x768`);
+      checkIpadLayout(await ipadMeasure(page), 1024, 768, option, phoneVals[1], null, `turning ${option} (words+current) at 1024x768`);
+
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.waitForTimeout(300);
+      after = await state(page);
+      ok(JSON.stringify(after) === JSON.stringify(before), `turning ${option} (words+current): state unchanged after turning back to 768x1024`);
+      checkIpadLayout(await ipadMeasure(page), 768, 1024, option, phoneVals[1], null, `turning ${option} (words+current) at 768x1024`);
+      ok(page.errors.length === 0, `turning ${option} (words+current): no page errors ` + page.errors.join(' | '));
+      await page.close();
+    } catch (e) { ok(false, `14. turning ${option} (words+current): unexpected error - ` + e.message); }
+
+    try {
+      const page = await newPage(768, 1024, `&ipad=${option}&level=1&fresh=1`);
+      await page.locator('#pick').click();
+      await page.waitForTimeout(50);
+      let pressed = await page.locator('#pick').getAttribute('aria-pressed');
+      ok(pressed === 'true', `turning ${option} (pick mode): #pick shows pressed before turning`);
+
+      await page.setViewportSize({ width: 1024, height: 768 });
+      await page.waitForTimeout(300);
+      pressed = await page.locator('#pick').getAttribute('aria-pressed');
+      ok(pressed === 'true', `turning ${option} (pick mode): #pick still pressed after turning to 1024x768`);
+      checkIpadLayout(await ipadMeasure(page), 1024, 768, option, phoneVals[1], null, `turning ${option} (pick mode) at 1024x768`);
+
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.waitForTimeout(300);
+      pressed = await page.locator('#pick').getAttribute('aria-pressed');
+      ok(pressed === 'true', `turning ${option} (pick mode): #pick still pressed after turning back to 768x1024`);
+      checkIpadLayout(await ipadMeasure(page), 768, 1024, option, phoneVals[1], null, `turning ${option} (pick mode) at 768x1024`);
+
+      const cells = occupiedCells(levels[0]);
+      const target = cells[0];
+      const c = await cellRectCenter(page, target.r, target.c);
+      await page.mouse.click(c.x, c.y);
+      await page.waitForTimeout(60);
+      const s = await state(page);
+      ok(s.revealed.some(rc => rc === `${target.r},${target.c}`), `turning ${option} (pick mode): pick-a-square still functions after turning`);
+      ok(page.errors.length === 0, `turning ${option} (pick mode): no page errors ` + page.errors.join(' | '));
+      await page.close();
+    } catch (e) { ok(false, `14. turning ${option} (pick mode): unexpected error - ` + e.message); }
+
+    try {
+      const page = await newPage(768, 1024, `&ipad=${option}&level=1&fresh=1`);
+      const opened = await openDialog(page, 'menu-dialog');
+      ok(opened, `turning ${option} (dialog): #menu-dialog opens before turning`);
+
+      await page.setViewportSize({ width: 1024, height: 768 });
+      await page.waitForTimeout(300);
+      ok(await page.locator('#menu-dialog').isVisible(), `turning ${option} (dialog): #menu-dialog stays open after turning to 1024x768`);
+      ok(await textFits(page), `turning ${option} (dialog): #menu-dialog text still fits at 1024x768`);
+
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.waitForTimeout(300);
+      ok(await page.locator('#menu-dialog').isVisible(), `turning ${option} (dialog): #menu-dialog stays open after turning back to 768x1024`);
+      ok(await textFits(page), `turning ${option} (dialog): #menu-dialog text still fits at 768x1024`);
+      ok(page.errors.length === 0, `turning ${option} (dialog): no page errors ` + page.errors.join(' | '));
+      await page.close();
+    } catch (e) { ok(false, `14. turning ${option} (dialog): unexpected error - ` + e.message); }
+  }
+} catch (e) { ok(false, '14. turning section: unexpected error - ' + e.message); }
+
+// 15. Languages en, es, vi at iPad sizes: Menu, Help, Settings, Go to a level (en only), Start over, and the
+//     level-complete panel, at fill (768x1024) and split (1024x768). Reuses textFits and openDialog.
+for (const lang of ['en', 'es', 'vi']) {
+  for (const [w, h, option] of [[768, 1024, 'fill'], [1024, 768, 'split']]) {
+    try {
+      const page = await newPage(w, h, `&ipad=${option}&level=1&fresh=1&lang=${lang}`);
+      ok(await textFits(page), `ipad ${option} ${w}x${h} lang ${lang}: play screen text fits`);
+
+      ok(await openDialog(page, 'menu-dialog'), `ipad ${option} ${w}x${h} lang ${lang}: #menu-dialog opens`);
+      ok(await textFits(page), `ipad ${option} ${w}x${h} lang ${lang}: #menu-dialog text fits`);
+      if (lang === 'en') {
+        await closeAnyDialog(page);
+        ok(await openDialog(page, 'goto-dialog'), `ipad ${option} ${w}x${h} lang en: #goto-dialog opens`);
+        ok(await textFits(page), `ipad ${option} ${w}x${h} lang en: #goto-dialog text fits`);
+        await closeAnyDialog(page);
+        await openDialog(page, 'menu-dialog');
+      }
+      await closeAnyDialog(page);
+
+      ok(await openDialog(page, 'help-dialog'), `ipad ${option} ${w}x${h} lang ${lang}: #help-dialog opens`);
+      ok(await textFits(page), `ipad ${option} ${w}x${h} lang ${lang}: #help-dialog text fits`);
+      await closeAnyDialog(page);
+
+      ok(await openDialog(page, 'settings-dialog'), `ipad ${option} ${w}x${h} lang ${lang}: #settings-dialog opens`);
+      ok(await textFits(page), `ipad ${option} ${w}x${h} lang ${lang}: #settings-dialog text fits`);
+      await closeAnyDialog(page);
+
+      ok(await openDialog(page, 'new-dialog'), `ipad ${option} ${w}x${h} lang ${lang}: #new-dialog opens (Start over)`);
+      ok(await textFits(page), `ipad ${option} ${w}x${h} lang ${lang}: #new-dialog text fits`);
+      await closeAnyDialog(page);
+
+      for (const wd of levels[0].words.map(x => x.w)) await swipe(page, wd);
+      const shown = await page.locator('#next-level').waitFor({ state: 'visible', timeout: 8000 }).then(() => true, () => false);
+      ok(shown, `ipad ${option} ${w}x${h} lang ${lang}: level-complete panel shows`);
+      ok(await textFits(page), `ipad ${option} ${w}x${h} lang ${lang}: level-complete panel text fits`);
+
+      ok(page.errors.length === 0, `ipad ${option} ${w}x${h} lang ${lang}: no page errors ` + page.errors.join(' | '));
+      await page.close();
+    } catch (e) { ok(false, `15. languages ${lang} at ${w}x${h} (${option}): unexpected error - ` + e.message); }
+  }
+}
+
+// 16. Safety screen: boot-check.js shows #boot-fail on a script error or a stall, with the approved wording, and
+//     stays hidden in normal play (phone and iPad) and after finishing a level. Skipped with a console note (not
+//     a failure) until boot-check.js exists; the lead will confirm these run once it does.
+try {
+  let bootCheckExists = false;
+  try { bootCheckExists = (await fetch(BASE + 'boot-check.js')).ok; } catch (e) { bootCheckExists = false; }
+  if (!bootCheckExists) {
+    console.log('NOTE: 16. safety screen - boot-check.js not found yet; these checks are skipped, not failed.');
+  } else {
+    try {
+      const ctx = await browser.newContext(phone(390, 844));
+      const page = await ctx.newPage();
+      await page.route('**/app.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: 'const x = ((( syntax error;' }));
+      await page.goto(BASE + 'index.html?fast=1');
+      await page.waitForSelector('#boot-fail', { state: 'visible', timeout: 6000 }).catch(() => {});
+      const visible = await page.locator('#boot-fail').isVisible().catch(() => false);
+      ok(visible, 'safety screen (broken app.js): #boot-fail becomes visible');
+      const text = (await page.locator('#boot-fail').textContent().catch(() => '')) || '';
+      ok(text.includes("Word Wheel couldn't start on this"), `safety screen: message starts with the expected line (got "${text.slice(0, 90)}")`);
+      ok(text.includes('Please send Shawn a screenshot of this screen.'), 'safety screen: message includes the Shawn line');
+      const box = await page.locator('#boot-fail').boundingBox();
+      const scr = await page.evaluate(() => ({ h: document.documentElement.scrollHeight, w: document.documentElement.scrollWidth, ih: innerHeight, iw: innerWidth }));
+      ok(scr.h <= scr.ih + 1 && scr.w <= scr.iw + 1, 'safety screen (broken app.js): page does not scroll');
+      ok(!!box && box.x >= -1 && box.y >= -1 && box.x + box.width <= scr.iw + 1 && box.y + box.height <= scr.ih + 1, 'safety screen (broken app.js): #boot-fail is on screen');
+      await ctx.close();
+    } catch (e) { ok(false, '16a. safety screen (broken app.js): unexpected error - ' + e.message); }
+
+    try {
+      const ctx = await browser.newContext(phone(390, 844));
+      const page = await ctx.newPage();
+      await page.route('**/app.js', route => route.fulfill({ status: 200, contentType: 'application/javascript', body: "throw new Error('boot-test throw');" }));
+      await page.goto(BASE + 'index.html?fast=1');
+      await page.waitForSelector('#boot-fail', { state: 'visible', timeout: 6000 }).catch(() => {});
+      const visible = await page.locator('#boot-fail').isVisible().catch(() => false);
+      ok(visible, 'safety screen (app.js throws at start): #boot-fail becomes visible');
+      await ctx.close();
+    } catch (e) { ok(false, '16b. safety screen (app.js throws): unexpected error - ' + e.message); }
+
+    try {
+      for (const [w, h, query] of [[390, 844, '&level=1&fresh=1'], [768, 1024, '&ipad=fill&level=1&fresh=1']]) {
+        const page = await newPage(w, h, query);
+        let hidden = !(await page.locator('#boot-fail').isVisible().catch(() => false));
+        ok(hidden, `safety screen (normal load ${w}x${h}): #boot-fail stays hidden`);
+        for (const wd of levels[0].words.map(x => x.w)) await swipe(page, wd);
+        await page.locator('#next-level').waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+        hidden = !(await page.locator('#boot-fail').isVisible().catch(() => false));
+        ok(hidden, `safety screen (after finishing a level, ${w}x${h}): #boot-fail stays hidden`);
+        ok(page.errors.length === 0, `safety screen (normal load ${w}x${h}): no page errors ` + page.errors.join(' | '));
+        await page.close();
+      }
+    } catch (e) { ok(false, '16c. safety screen (hidden in normal play): unexpected error - ' + e.message); }
+  }
+} catch (e) { ok(false, '16. safety screen section: unexpected error - ' + e.message); }
+
+// 17. Progress: a fresh save gets allLevels true and "Go to a level" reaches LEVELS.length, with body text that
+//     says so; an old-style save (no allLevels field) keeps today's maxLevel rule; Start over keeps the field.
+try {
+  const page = await newPage(390, 844, '&level=1&fresh=1');
+  let s = await state(page);
+  ok(typeof s.allLevels === 'boolean', 'progress: state().allLevels is a boolean');
+  ok(s.allLevels === true, `progress: a fresh save gets allLevels true (got ${s.allLevels})`);
+
+  ok(await openDialog(page, 'goto-dialog'), 'progress: #goto-dialog opens from #menu-goto');
+  const bodyAll = (await page.locator('#goto-body').textContent()) || '';
+  ok(containsNumber(bodyAll, levels.length), `progress: goto body mentions the top level ${levels.length} when allLevels is true (got "${bodyAll}")`);
+
+  for (let i = 0; i < Math.ceil(levels.length / 10) + 1; i++) await page.locator('#goto-plus10').click();
+  for (let i = 0; i < 10; i++) await page.locator('#goto-plus').click();
+  const gotoVal = await gotoValueOf(page);
+  ok(gotoVal === levels.length, `progress: stepping up with allLevels reaches level ${levels.length} (got ${gotoVal})`);
+  await page.locator('#goto-go').click();
+  await page.waitForTimeout(60);
+  s = await state(page);
+  ok(s.levelIndex === levels.length - 1, `progress: #goto-go with allLevels reaches the top level (levelIndex ${s.levelIndex})`);
+  ok(page.errors.length === 0, 'progress (fresh save): no page errors ' + page.errors.join(' | '));
+  await page.close();
+} catch (e) { ok(false, '17a. progress (fresh save gets allLevels): unexpected error - ' + e.message); }
+
+try {
+  const page = await newPage(390, 844, '&level=5&fresh=1');
+  let s = await state(page);
+  const allBefore = s.allLevels;
+  await page.locator('#menu-button').click();
+  await page.waitForTimeout(50);
+  await page.locator('#menu-new').click();
+  await page.waitForTimeout(50);
+  await page.locator('#confirm-new').click();
+  await page.waitForTimeout(60);
+  s = await state(page);
+  ok(s.levelIndex === 0, 'progress: Start over goes back to level 1');
+  ok(s.allLevels === allBefore, `progress: Start over keeps allLevels (${allBefore})`);
+  ok(page.errors.length === 0, 'progress (start over): no page errors ' + page.errors.join(' | '));
+  await page.close();
+} catch (e) { ok(false, '17b. progress (start over keeps allLevels): unexpected error - ' + e.message); }
+
+try {
+  const page = await newPage(390, 844, '&level=1&fresh=1');
+  const saveKey = await page.evaluate(() => window.__wordwheel.saveKey);
+  const oldSave = {
+    v: 1, level: 3, found: [], revealed: [], bonus: [], order: [0, 1, 2, 3, 4, 5], current: [],
+    maxLevel: 7, stats: { levelsDone: 2, bonusTotal: 0, hintsUsed: 0 }
+  };
+  await page.evaluate(({ key, save }) => localStorage.setItem(key, JSON.stringify(save)), { key: saveKey, save: oldSave });
+  await page.goto(BASE + 'index.html?fast=1');
+  await page.waitForFunction(() => window.__wordwheel);
+  let s = await state(page);
+  ok(s.allLevels === false, `progress: an old-style save (no allLevels field) gets allLevels false (got ${s.allLevels})`);
+
+  ok(await openDialog(page, 'goto-dialog'), 'progress (old save): #goto-dialog opens');
+  const bodyOld = (await page.locator('#goto-body').textContent()) || '';
+  ok(containsNumber(bodyOld, 7), `progress (old save): goto body mentions maxLevel 7 (got "${bodyOld}")`);
+  for (let i = 0; i < 3; i++) await page.locator('#goto-plus10').click();
+  const gotoVal = await gotoValueOf(page);
+  ok(gotoVal === 7, `progress (old save): stepping up clamps at maxLevel 7, not LEVELS.length (got ${gotoVal})`);
+  ok(page.errors.length === 0, 'progress (old save): no page errors ' + page.errors.join(' | '));
+  await page.close();
+} catch (e) { ok(false, '17c. progress (old-style save keeps todays rule): unexpected error - ' + e.message); }
 
 await browser.close();
 console.log(`${checks} checks, ${failures} failed.`);

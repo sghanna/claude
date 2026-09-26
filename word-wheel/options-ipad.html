@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="options.css">
+<style>
+/* Page-specific styles for the iPad options page. options.css (shared, not owned by this page) gives
+   the header, .row/article layout, h2/p text and the .moments/button look; everything iPad-specific
+   (the toolbar, the scaled-down device frames and the measured-sizes table) lives here instead. */
+.note-line { font-size: 15px; color: #bdcbbf; max-width: 860px; margin: 4px auto 0; }
+.toolbar { max-width: 1280px; margin: 22px auto 0; display: flex; flex-wrap: wrap; gap: 22px 32px; align-items: center; }
+.toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.toolbar-group span { font-size: 13px; font-weight: 750; letter-spacing: 1px; color: #9fb0a3; text-transform: uppercase; margin-right: 4px; }
+
+.ipad-page article { width: 400px; }
+article p.reason { min-height: 0; }
+@media (min-width: 900px) { article p.reason { min-height: 130px; } }   /* two or three side by side: line the iPads up */
+
+.ipad-stage {
+  position: relative; width: 100%; overflow: hidden; border-radius: 14px;
+  border: 4px solid #59675e; box-shadow: 0 15px 35px #0006; background: #0c2419;
+}
+.ipad-frame { position: absolute; top: 0; left: 0; transform-origin: top left; }
+.ipad-frame iframe { display: block; border: 0; background: #0c2419; }
+
+.try-full { display: block; width: 100%; margin-top: 14px; }
+
+table.sizes { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 14px; }
+table.sizes caption { text-align: left; font-size: 13px; font-weight: 750; letter-spacing: 1px; color: #9fb0a3; text-transform: uppercase; margin-bottom: 6px; }
+table.sizes th, table.sizes td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2a382f; color: #d3dbd5; }
+table.sizes th { color: #e5c47e; font-weight: 750; }
+table.sizes td.metric { color: #f7f0df; font-weight: 700; }
+table.sizes td.measuring { color: #8a978c; font-style: italic; }
+</style>
+<title>Word Wheel - iPad layout (Claude)</title>
+</head>
+<body class="ipad-page">
+<header>
+  <div class="eyebrow">Word Wheel: a visual choice for Shawn</div>
+  <h1>Three ways to play on an iPad</h1>
+  <p class="intro">Below are three ways Word Wheel could lay itself out on an iPad. This is iPad only:
+    her iPhone does not change under any of these, and on a phone-width screen every option still draws
+    exactly what the game draws today. The live game keeps today's phone-width layout until you pick one
+    of these below.</p>
+  <p class="note-line">On your iPad mini everything looks about 20% smaller than on her iPad Air 2. Same
+    layout, smaller screen.</p>
+</header>
+
+<div class="toolbar">
+  <div class="toolbar-group" id="orientation-group">
+    <span>Orientation</span>
+    <button type="button" data-orientation="upright" aria-pressed="true">Upright</button>
+    <button type="button" data-orientation="sideways" aria-pressed="false">Sideways</button>
+  </div>
+  <div class="toolbar-group" id="level-group">
+    <span>Level</span>
+    <button type="button" data-level="1" aria-pressed="true">Level 1</button>
+    <button type="button" data-level="21" aria-pressed="false">Level 21</button>
+    <button type="button" data-level="65" aria-pressed="false">Level 65 (tall grid)</button>
+    <button type="button" data-level="105" aria-pressed="false">Level 105 (biggest grid)</button>
+    <button type="button" data-level="400" aria-pressed="false">Level 400</button>
+  </div>
+</div>
+
+<main class="row" id="options"></main>
+
+<script>
+// Real device sizes (points) the game itself measures against: an upright or sideways iPad, and her
+// iPhone for comparison. Every iframe below is the real game, loaded at one of these two sizes and then
+// scaled down with a CSS transform to fit the window - the game inside never knows it was scaled.
+const NATIVE = { upright: { w: 768, h: 1024 }, sideways: { w: 1024, h: 768 } };
+const PHONE = { w: 390, h: 844 };
+
+const OPTIONS = [
+  {
+    key: 'fill',
+    title: 'Option 1: fill (Claude\'s recommendation)',
+    reason: 'Same layout as her phone, just bigger, so there\'s nothing new to learn between her phone and her iPad. Sideways it looks like today. On tall grids like level 65 the buttons get a little shorter so the letters stay big.'
+  },
+  {
+    key: 'today',
+    title: 'Option 2: today (live now)',
+    reason: 'The phone-width strip she\'d see today, with empty space on both sides.'
+  },
+  {
+    key: 'split',
+    title: 'Option 3: split',
+    reason: 'Like fill when upright. Sideways, the grid goes on the left and the wheel on the right.'
+  }
+];
+
+// Measured sizes (CSS px) from the game itself in WebKit on 2026-09-25 (.work/ipad-layout/measure-options.mjs:
+// sizes().cell, sizes().letter, and the computed font-size of a .tool button, rounded). While this is null, the table below shows "[measuring]" instead of a number -
+// nothing here is estimated.
+const MEASURED = {
+  "phone": {
+    "1": { "cell": 66, "letter": 92, "buttonFont": 19 },
+    "21": { "cell": 52, "letter": 83, "buttonFont": 19 },
+    "65": { "cell": 46, "letter": 69, "buttonFont": 19 },
+    "105": { "cell": 46, "letter": 69, "buttonFont": 19 },
+    "400": { "cell": 46, "letter": 69, "buttonFont": 19 }
+  },
+  "fill": {
+    "upright": {
+      "1": { "cell": 86, "letter": 120, "buttonFont": 25 },
+      "21": { "cell": 68, "letter": 109, "buttonFont": 25 },
+      "65": { "cell": 68, "letter": 94, "buttonFont": 25 },
+      "105": { "cell": 60, "letter": 91, "buttonFont": 25 },
+      "400": { "cell": 60, "letter": 91, "buttonFont": 25 }
+    },
+    "sideways": {
+      "1": { "cell": 66, "letter": 92, "buttonFont": 19 },
+      "21": { "cell": 52, "letter": 76, "buttonFont": 19 },
+      "65": { "cell": 49, "letter": 72, "buttonFont": 19 },
+      "105": { "cell": 49, "letter": 72, "buttonFont": 19 },
+      "400": { "cell": 49, "letter": 72, "buttonFont": 19 }
+    }
+  },
+  "today": {
+    "upright": {
+      "1": { "cell": 66, "letter": 92, "buttonFont": 19 },
+      "21": { "cell": 66, "letter": 84, "buttonFont": 19 },
+      "65": { "cell": 64, "letter": 84, "buttonFont": 19 },
+      "105": { "cell": 54, "letter": 84, "buttonFont": 19 },
+      "400": { "cell": 54, "letter": 84, "buttonFont": 19 }
+    },
+    "sideways": {
+      "1": { "cell": 66, "letter": 92, "buttonFont": 19 },
+      "21": { "cell": 52, "letter": 76, "buttonFont": 19 },
+      "65": { "cell": 49, "letter": 72, "buttonFont": 19 },
+      "105": { "cell": 49, "letter": 72, "buttonFont": 19 },
+      "400": { "cell": 49, "letter": 72, "buttonFont": 19 }
+    }
+  },
+  "split": {
+    "upright": {
+      "1": { "cell": 86, "letter": 120, "buttonFont": 25 },
+      "21": { "cell": 68, "letter": 109, "buttonFont": 25 },
+      "65": { "cell": 68, "letter": 94, "buttonFont": 25 },
+      "105": { "cell": 60, "letter": 91, "buttonFont": 25 },
+      "400": { "cell": 60, "letter": 91, "buttonFont": 25 }
+    },
+    "sideways": {
+      "1": { "cell": 83, "letter": 120, "buttonFont": 24 },
+      "21": { "cell": 83, "letter": 109, "buttonFont": 24 },
+      "65": { "cell": 72, "letter": 109, "buttonFont": 24 },
+      "105": { "cell": 62, "letter": 109, "buttonFont": 24 },
+      "400": { "cell": 62, "letter": 109, "buttonFont": 24 }
+    }
+  }
+};
+
+let orientation = 'upright';
+let level = 1;
+
+function frameSrc(optionKey) {
+  return `index.html?ipad=${optionKey}&level=${level}&fresh=1&fast=1`;
+}
+
+function sizesFor(optionKey, ori, lvl) {
+  if (!MEASURED) return null;
+  const branch = MEASURED[optionKey];
+  return (branch && branch[ori] && branch[ori][lvl]) || null;
+}
+
+function phoneSizesFor(lvl) {
+  if (!MEASURED || !MEASURED.phone) return null;
+  return MEASURED.phone[lvl] || null;
+}
+
+function sizeRow(label, ipadVal, phoneVal, unit) {
+  const ipadCell = ipadVal != null ? `${ipadVal}${unit}` : '[measuring]';
+  const phoneCell = phoneVal != null ? `${phoneVal}${unit}` : '[measuring]';
+  const ipadClass = ipadVal != null ? '' : ' class="measuring"';
+  const phoneClass = phoneVal != null ? '' : ' class="measuring"';
+  return `<tr><td class="metric">${label}</td><td${ipadClass}>${ipadCell}</td><td${phoneClass}>${phoneCell}</td></tr>`;
+}
+
+function tableFor(optionKey) {
+  const s = sizesFor(optionKey, orientation, level);
+  const p = phoneSizesFor(level);
+  const oriLabel = orientation === 'upright' ? 'upright' : 'sideways';
+  return `
+    <table class="sizes">
+      <caption>Measured, level ${level}</caption>
+      <thead><tr><th></th><th>This iPad (${oriLabel})</th><th>Her iPhone (390x844)</th></tr></thead>
+      <tbody>
+        ${sizeRow('Grid square', s && s.cell, p && p.cell, 'px')}
+        ${sizeRow('Wheel letter', s && s.letter, p && p.letter, 'px')}
+        ${sizeRow('Button text', s && s.buttonFont, p && p.buttonFont, 'px')}
+      </tbody>
+    </table>`;
+}
+
+function render() {
+  document.getElementById('options').innerHTML = OPTIONS.map(o => `
+    <article data-option="${o.key}">
+      <h2>${o.title}</h2>
+      <p class="reason">${o.reason}</p>
+      <div class="ipad-stage">
+        <div class="ipad-frame">
+          <iframe title="${o.title}" src="${frameSrc(o.key)}"></iframe>
+        </div>
+      </div>
+      <button type="button" class="try-full" data-try="${o.key}">Try it full size</button>
+      <div class="table-slot">${tableFor(o.key)}</div>
+    </article>`).join('');
+  layoutStages();
+}
+
+// Sizes each .ipad-frame's iframe to the real device size for the current orientation (so the game
+// inside measures itself the same way a real rotated iPad would), then scales the whole frame down
+// with a CSS transform so it fits the article's width. Recomputed on resize.
+function layoutStages() {
+  const nat = NATIVE[orientation];
+  document.querySelectorAll('.ipad-stage').forEach(stage => {
+    const frame = stage.querySelector('.ipad-frame');
+    const iframe = frame.querySelector('iframe');
+    iframe.style.width = nat.w + 'px';
+    iframe.style.height = nat.h + 'px';
+    frame.style.width = nat.w + 'px';
+    frame.style.height = nat.h + 'px';
+    const scale = stage.clientWidth / nat.w;
+    frame.style.transform = `scale(${scale})`;
+    stage.style.height = Math.round(nat.h * scale) + 'px';
+  });
+}
+
+function setPressed(groupId, attr, value) {
+  document.querySelectorAll(`#${groupId} button`).forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset[attr] === String(value)));
+  });
+}
+
+document.getElementById('orientation-group').addEventListener('click', e => {
+  const b = e.target.closest('button[data-orientation]');
+  if (!b) return;
+  orientation = b.dataset.orientation;
+  setPressed('orientation-group', 'orientation', orientation);
+  // Orientation is real device rotation, not a URL option: resize the existing iframes (which fires a
+  // resize inside each, same as the game's own visualViewport listener handles on a real rotation)
+  // instead of reloading them, and refresh the measured-sizes tables to match.
+  layoutStages();
+  document.querySelectorAll('article').forEach(a => {
+    a.querySelector('.table-slot').innerHTML = tableFor(a.dataset.option);
+  });
+});
+
+document.getElementById('level-group').addEventListener('click', e => {
+  const b = e.target.closest('button[data-level]');
+  if (!b) return;
+  level = +b.dataset.level;
+  setPressed('level-group', 'level', level);
+  render();
+});
+
+document.getElementById('options').addEventListener('click', e => {
+  const b = e.target.closest('button[data-try]');
+  if (!b) return;
+  window.open(frameSrc(b.dataset.try), '_blank');
+});
+
+let resizeTimer = null;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(layoutStages, 120); });
+
+render();
+</script>
+</body>
+</html>
